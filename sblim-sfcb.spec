@@ -8,7 +8,7 @@ Name: sblim-sfcb
 Summary: Small Footprint CIM Broker
 URL: http://www.sblim.org
 Version: 1.3.11
-Release: 3%{?dist}
+Release: 4%{?dist}
 Group: Applications/System
 License: EPL
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
@@ -23,6 +23,10 @@ Patch3: sblim-sfcb-1.3.9-sfcbrepos-schema-location.patch
 Patch4: sblim-sfcb-1.3.11-check-before-free.patch
 # Patch5: fix CIM clients are sometimes getting HTTP/1.1 501 Not Implemented
 Patch5: sblim-sfcb-1.3.16-http-header-cmd-check.patch
+#Patch6: backported from upstream
+Patch6: sblim-sfcb-1.3.11-memleak-fix.patch
+#Patch7: backported from upstream
+Patch7: sblim-sfcb-1.3.11-zombie-fix.patch
 Provides: cim-server
 Requires: cim-schema
 Requires: util-linux-ng
@@ -58,6 +62,8 @@ Programming Interface (CMPI).
 %patch3 -p1 -b .sfcbrepos-schema-location
 %patch4 -p1 -b .check-before-free
 %patch5 -p1 -b .http-header-cmd-check
+%patch6 -p1 -b .memleak-fix
+%patch7 -p0 -b .zombie-fix
 
 %build
 %configure --enable-debug --enable-uds --enable-ssl --enable-pam --enable-ipv6 CFLAGS="$CFLAGS -D_GNU_SOURCE"
@@ -132,6 +138,12 @@ fi;
 #%doc COPYING README
 
 %changelog
+* Mon Apr 20 2015 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.11-4
+- Fix memory leak in sblim-sfcb
+  Resolves: #1114798
+- Fix a zombie process of openwsmand (defunct) is left behind
+  Resolves: #1110106
+
 * Wed Dec 10 2014 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.11-3
 - Fix CIM clients are sometimes getting HTTP/1.1 501 Not Implemented
   Resolves: #1102477

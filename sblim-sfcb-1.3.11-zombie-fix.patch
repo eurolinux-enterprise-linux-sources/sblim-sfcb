@@ -1,0 +1,26 @@
+Index: mlog.c
+===================================================================
+RCS file: /cvsroot/sblim/sfcb/mlog.c,v
+retrieving revision 1.11
+diff -u -p -r1.11 mlog.c
+--- mlog.c	7 Apr 2010 20:54:11 -0000	1.11
++++ mlog.c	22 Jun 2011 20:50:02 -0000
+@@ -29,6 +29,7 @@ const char *_mlog_id = "$Id: mlog.c,v 1.
+ #include <errno.h>
+ #include <signal.h>
+ #include "trace.h"              /* for setSignal() */
++#include <sys/wait.h>
+  
+ FILE           *log_w_stream;
+ int             logfds[2] = { 0, 0 };
+@@ -108,8 +109,10 @@ void startLogging(int level) {
+   * the syslog services that are created in startLogging.
+   */
+ void closeLogging() {
++   int wstat;
+    closelog();
+    close(logfds[1]);
++   wait(&wstat); // wait to prevent zombie
+ }
+ 
+ 
