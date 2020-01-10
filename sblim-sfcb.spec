@@ -8,7 +8,7 @@ Name: sblim-sfcb
 Summary: Small Footprint CIM Broker
 URL: http://www.sblim.org
 Version: 1.3.11
-Release: 2%{?dist}
+Release: 3%{?dist}
 Group: Applications/System
 License: EPL
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
@@ -21,6 +21,8 @@ Patch2: sblim-sfcb-1.3.7-close_logging.patch
 Patch3: sblim-sfcb-1.3.9-sfcbrepos-schema-location.patch
 #Patch4: backported from upstream
 Patch4: sblim-sfcb-1.3.11-check-before-free.patch
+# Patch5: fix CIM clients are sometimes getting HTTP/1.1 501 Not Implemented
+Patch5: sblim-sfcb-1.3.16-http-header-cmd-check.patch
 Provides: cim-server
 Requires: cim-schema
 Requires: util-linux-ng
@@ -55,6 +57,7 @@ Programming Interface (CMPI).
 %patch2 -p1 -b .close_logging
 %patch3 -p1 -b .sfcbrepos-schema-location
 %patch4 -p1 -b .check-before-free
+%patch5 -p1 -b .http-header-cmd-check
 
 %build
 %configure --enable-debug --enable-uds --enable-ssl --enable-pam --enable-ipv6 CFLAGS="$CFLAGS -D_GNU_SOURCE"
@@ -129,6 +132,10 @@ fi;
 #%doc COPYING README
 
 %changelog
+* Wed Dec 10 2014 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.11-3
+- Fix CIM clients are sometimes getting HTTP/1.1 501 Not Implemented
+  Resolves: #1102477
+
 * Wed Oct 12 2011 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.11-2
 - Checks for valid pointer before calling free() in providerDrv.c,
   result.c and support.c (backported from upstream)
