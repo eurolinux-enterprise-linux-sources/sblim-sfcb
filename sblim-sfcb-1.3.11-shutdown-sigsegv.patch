@@ -1,0 +1,555 @@
+diff -up sblim-sfcb-1.3.11/cimXmlRequest.c.orig sblim-sfcb-1.3.11/cimXmlRequest.c
+--- sblim-sfcb-1.3.11/cimXmlRequest.c.orig	2010-12-22 00:01:49.000000000 +0100
++++ sblim-sfcb-1.3.11/cimXmlRequest.c	2016-09-27 13:15:56.792486045 +0200
+@@ -52,10 +52,12 @@
+ #define SFCB_ASM(x)
+ #endif
+ 
++#ifdef NEEDS_CLEANUP
+ #ifdef LOCAL_CONNECT_ONLY_ENABLE
+ // from httpAdapter.c
+ int noChunking = 0;
+ #endif // LOCAL_CONNECT_ONLY_ENABLE
++#endif
+ 
+ typedef struct handler {
+    RespSegments(*handler) (CimXmlRequestContext *, RequestHdr * hdr);
+diff -up sblim-sfcb-1.3.11/httpAdapter.c.orig sblim-sfcb-1.3.11/httpAdapter.c
+--- sblim-sfcb-1.3.11/httpAdapter.c.orig	2016-09-27 13:15:56.784486042 +0200
++++ sblim-sfcb-1.3.11/httpAdapter.c	2016-09-27 13:15:56.792486045 +0200
+@@ -148,6 +148,10 @@ typedef struct _buffer {
+  #define USE_INET6
+ #endif
+ 
++#ifdef USE_INET6
++static int fallback_ipv4;
++#endif
++
+ void initHttpProcCtl(int p)
+ {
+    httpProcSemKey=ftok(SFCB_BINARY,'H');
+@@ -1238,6 +1242,7 @@ getSocket()
+   if (fd < 0) {
+     mlogf(M_INFO, M_SHOW, "--- Using IPv4 address\n");
+     fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
++    fallback_ipv4 = 1;
+   }
+ #else
+   fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+@@ -1246,53 +1251,100 @@ getSocket()
+   return fd;
+ }
+ 
+-static int
+-bindToPort(int sock, int port, void *ssin, socklen_t * sin_len)
+-{
+-
+ #ifdef USE_INET6
++static struct sockaddr *
++prepSockAddr6(int port, void *ssin, socklen_t * sin_len)
++{
+   struct sockaddr_in6 *sin = ssin;
+-#else
+-  struct sockaddr_in *sin = ssin;
+-#endif
+ 
+   *sin_len = sizeof(*sin);
++  memset(sin, 0, *sin_len);
+ 
++  sin->sin6_family = AF_INET6;
++  if (httpLocalOnly)
++    sin->sin6_addr = in6addr_loopback;
++  else
++    sin->sin6_addr = in6addr_any;
++  sin->sin6_port = htons(port);
++
++  return (struct sockaddr *) sin;
++}
++#endif
++
++static struct sockaddr *
++prepSockAddr4(int port, void *ssin, socklen_t * sin_len)
++{
++  struct sockaddr_in *sin = ssin;
++
++  *sin_len = sizeof(*sin);
+   memset(sin, 0, *sin_len);
+ 
+-  if (sock >= 0) {
+-    if (getControlBool("httpLocalOnly", &httpLocalOnly))
+-      httpLocalOnly = 0;
++  sin->sin_family = AF_INET;
++  if (httpLocalOnly) {
++    const char *loopback_int = "127.0.0.1";
++    inet_aton(loopback_int, &(sin->sin_addr));
++  } else
++    sin->sin_addr.s_addr = INADDR_ANY;
++  sin->sin_port = htons(port);
++
++  return (struct sockaddr *) sin;
++}
++
++static int
++bindToPort(int sock, int port, void *ssin, socklen_t * sin_len)
++{
++  struct sockaddr *sin;
++
++  if (sock < 0)
++    return 1;
++
++  if (getControlBool("httpLocalOnly", &httpLocalOnly))
++    httpLocalOnly = 0;
++
++  char *ip = httpLocalOnly ? "127.0.0.1" : "0.0.0.0";
+ 
+ #ifdef USE_INET6
+-    sin->sin6_family = AF_INET6;
+-    if (httpLocalOnly)
+-      sin->sin6_addr = in6addr_loopback;
+-    else
+-      sin->sin6_addr = in6addr_any;
+-    sin->sin6_port = htons(port);
+-#else
+-    sin->sin_family = AF_INET;
+-    if (httpLocalOnly) {
+-      const char     *loopback_int = "127.0.0.1";
+-      inet_aton(loopback_int, &(sin->sin_addr));
+-    } else
+-      sin->sin_addr.s_addr = INADDR_ANY;
+-    sin->sin_port = htons(port);
++  if (!fallback_ipv4) {
++    ip = httpLocalOnly ? "[::1]" : "[::]";
++    if (!(sin = prepSockAddr6(port, ssin, sin_len)))
++      return 1;
++  }
++  else
+ #endif
++    if (!(sin = prepSockAddr4(port, ssin, sin_len)))
++      return 1;
+ 
+-    if (bind(sock, (struct sockaddr *) sin, *sin_len) || listen(sock, 10)) {
+-      mlogf(M_ERROR, M_SHOW, "--- Cannot listen on port %ld (%s)\n", port,
+-            strerror(errno));
++  long maxtries = 8;
++  //getControlNum("maxBindAttempts", &maxtries);
++  int i = maxtries = maxtries <= 0 ? 1 : maxtries;  // ensure > 0
++  while (1) {
++    if (!bind(sock, sin, *sin_len)) {
++      if (!listen(sock, 10)) {
++        break;
++      } else {
++        mlogf(M_ERROR, M_SHOW, "--- Cannot listen on socket %s:%d (%s)\n",
++            ip, port, strerror(errno));
++        return 1;
++      }
++    } else if (errno==EADDRINUSE) {
++      if (--i <= 0) {
++        mlogf(M_ERROR, M_SHOW,
++            "--- Cannot bind to socket %s:%d after %d attempts. (%s)\n",
++            ip, port, maxtries, strerror(errno));
++        return 1;
++      }
++      mlogf(M_ERROR, M_SHOW,
++          "--- Socket %s:%d not ready (%s), retrying...\n", ip, port,
++          strerror(errno));
+       sleep(1);
++    } else {
++      mlogf(M_ERROR, M_SHOW, "--- Cannot bind to socket %s:%d (%s)\n",
++          ip, port, strerror(errno));
+       return 1;
+     }
+-
+-    return 0;
+-
+   }
+-
+-  return 1;
++  mlogf(M_ERROR, M_SHOW, "--- Listening on socket %s:%d\n", ip, port);
++  return 0;
+ }
+ 
+ #ifdef HAVE_UDS
+@@ -1662,6 +1714,7 @@ int httpDaemon(int argc, char *argv[], i
+   setSignal(SIGINT, SIG_IGN, 0);
+   setSignal(SIGTERM, SIG_IGN, 0);
+   setSignal(SIGHUP, SIG_IGN, 0);
++  setSignal(SIGUSR2, SIG_IGN, 0);
+ 
+ #if defined USE_SSL
+   if (sslMode) {
+diff -up sblim-sfcb-1.3.11/mlog.c.orig sblim-sfcb-1.3.11/mlog.c
+--- sblim-sfcb-1.3.11/mlog.c.orig	2016-09-27 13:15:56.789486044 +0200
++++ sblim-sfcb-1.3.11/mlog.c	2016-09-27 13:15:56.793486046 +0200
+@@ -88,6 +88,7 @@ void startLogging(int level) {
+     setSignal(SIGINT, SIG_IGN, 0);
+     setSignal(SIGTERM, SIG_IGN, 0);
+     setSignal(SIGHUP, SIG_IGN, 0);
++    setSignal(SIGUSR2, SIG_IGN, 0);
+ 
+     runLogger(logfds[0], level);
+ 
+diff -up sblim-sfcb-1.3.11/providerDrv.c.orig sblim-sfcb-1.3.11/providerDrv.c
+--- sblim-sfcb-1.3.11/providerDrv.c.orig	2016-09-27 13:15:56.780486040 +0200
++++ sblim-sfcb-1.3.11/providerDrv.c	2016-09-27 13:15:56.793486046 +0200
+@@ -243,7 +243,8 @@ int testStartedProc(int pid, int *left)
+          stopped=1;
+          (pp+i)->pid=0;
+          info=(pp+i)->firstProv;
+-         pReg->ft->resetProvider(pReg,pid);
++         if (pReg)
++            pReg->ft->resetProvider(pReg,pid);
+       }   
+       if ((pp+i)->pid!=0) (*left)++;
+    }
+@@ -366,11 +367,11 @@ static void stopProc(void *p)
+    mlogf(M_INFO,M_SHOW,"---  stopped %s %d\n",processName,getpid());
+    ctx->ft->release(ctx);
+    
+-   uninit_sfcBroker();
+-   uninitProvProcCtl();
+-   uninitSocketPairs();
+-   sunsetControl();
+-   uninitGarbageCollector();
++   //uninit_sfcBroker(); /* 3497096 */
++   //uninitProvProcCtl();
++   //uninitSocketPairs();
++   //sunsetControl();
++   //uninitGarbageCollector();
+    
+    exit(0);
+ } 
+@@ -722,10 +723,12 @@ static int getProcess(ProviderInfo * inf
+          if (info->pid == 0) {
+ 
+             currentProc=getpid();
++            sigprocmask(SIG_SETMASK, &old_mask, NULL);
+             setSignal(SIGCHLD, SIG_DFL,0);
+             setSignal(SIGTERM, SIG_IGN,0);
+             setSignal(SIGHUP, SIG_IGN,0);
+             setSignal(SIGUSR1, handleSigUsr1,0);
++            setSignal(SIGUSR2, SIG_IGN,0);
+             
+             setSignal(SIGSEGV, handleSigSegv,SA_ONESHOT);
+ 
+diff -up sblim-sfcb-1.3.11/providerMgr.c.orig sblim-sfcb-1.3.11/providerMgr.c
+--- sblim-sfcb-1.3.11/providerMgr.c.orig	2010-05-17 22:24:08.000000000 +0200
++++ sblim-sfcb-1.3.11/providerMgr.c	2016-09-27 13:15:56.794486046 +0200
+@@ -124,6 +124,9 @@ static void notSupported(int *requestor,
+    free(req);
+ }
+ 
++int prov_rdy_state = -1;   /* 3497096 :77022 - stopBroker() reads this value */
++pthread_mutex_t syncMtx=PTHREAD_MUTEX_INITIALIZER; /* shared with stopBroker */
++
+ /* -------------
+  * ---
+  *      Instance Provider support
+@@ -931,6 +934,10 @@ void processProviderMgrRequests()
+  
+    _SFCB_ENTER(TRACE_PROVIDERMGR, "processProviderMgrRequests");
+ 
++   /* SF:3416060 disable signals during startup */
++   sigfillset(&mask);
++   sigprocmask(SIG_SETMASK, &mask, &old_mask);
++
+    startUpProvider("root/interop","$ClassProvider$");
+ 
+ #ifdef SFCB_INCL_INDICATION_SUPPORT
+@@ -941,6 +948,8 @@ void processProviderMgrRequests()
+ #endif
+ 
+    startUpProvider("root/interop","$ProfileProvider$");
++
++   sigprocmask(SIG_SETMASK, &old_mask, NULL);
+       
+    for (;;) {
+       MgrHandler hdlr; 
+@@ -960,9 +969,19 @@ void processProviderMgrRequests()
+            _SFCB_TRACE(1,("--- Mgr request for %s-%s (%d) from %d", req->nameSpace.data,
+                 req->className.data,req->type,requestor));
+ 
++           pthread_mutex_lock(&syncMtx); /* 77022 */
++           prov_rdy_state = -1;
++           pthread_mutex_unlock(&syncMtx);
++
++           sigprocmask(SIG_SETMASK, &mask, &old_mask);
+            hdlr = mHandlers[req->type];
+            hdlr.handler(&requestor, req);
++           sigprocmask(SIG_SETMASK, &old_mask, NULL);
+            
++           pthread_mutex_lock(&syncMtx); /* 77022 */
++           prov_rdy_state = 1;
++           pthread_mutex_unlock(&syncMtx);
++
+            _SFCB_TRACE(1,("--- Mgr request for %s-%s DONE", req->nameSpace.data,
+               req->className.data));
+             free(req);
+diff -up sblim-sfcb-1.3.11/providerMgr.h.orig sblim-sfcb-1.3.11/providerMgr.h
+--- sblim-sfcb-1.3.11/providerMgr.h.orig	2009-12-15 00:07:54.000000000 +0100
++++ sblim-sfcb-1.3.11/providerMgr.h	2016-09-27 13:15:56.794486046 +0200
+@@ -348,4 +348,6 @@ BinResponseHdr **invokeProviders(BinRequ
+ BinResponseHdr *invokeProvider(BinRequestContext * ctx);
+ void freeResponseHeaders(BinResponseHdr ** resp, BinRequestContext * ctx);
+ 
++sigset_t mask, old_mask;
++
+ #endif
+diff -up sblim-sfcb-1.3.11/sfcBroker.c.orig sblim-sfcb-1.3.11/sfcBroker.c
+--- sblim-sfcb-1.3.11/sfcBroker.c.orig	2010-05-25 17:07:43.000000000 +0200
++++ sblim-sfcb-1.3.11/sfcBroker.c	2016-09-27 13:15:56.794486046 +0200
+@@ -91,6 +91,10 @@ extern void dumpTiming(int pid);
+ static char **restartArgv;
+ static int restartArgc;
+ static int adaptersStopped=0,providersStopped=0,restartBroker=0;
++static int inaHttpdRestart=0;
++
++long sslMode=0;
++static int startHttpd(int argc, char *argv[], int sslMode);
+ 
+ extern char * configfile;
+ 
+@@ -149,17 +153,49 @@ static int stopNextAdapter()
+    return 0;
+ }
+ 
++/* 3497096 :77022  */
++extern pthread_mutex_t syncMtx; /* syncronize provider state */
++extern int prov_rdy_state;      /* -1 indicates not ready */
++
+ static pthread_mutex_t sdMtx=PTHREAD_MUTEX_INITIALIZER;
+ static pthread_cond_t  sdCnd=PTHREAD_COND_INITIALIZER;
+ static int stopping=0;
+ extern int remSem();   
+ 
++/* secs to wait for a process to die during shutdown [sfcb#94] */
++static int      sigChldWaitTime = 3;
++
+ static void stopBroker(void *p)
+ {
+    struct timespec waitTime;
+-   int rc,sa=0,sp=0;
++   int rc,sa=0,sp=0, count = 0;
++ 
++   /* SF 3497096 bugzilla 77022 */
++   /* stopping is set to prevent other threads calling this routine */
++   pthread_mutex_lock(&syncMtx);
++   if (stopping) {
++      printf("Stopping sfcb is in progress. Please wait...\n");
++      pthread_mutex_unlock(&syncMtx);
++      return;
++   }
++   else {
++     stopping=1;
++     pthread_mutex_unlock(&syncMtx);
++   }
+    
+-   stopping=1;
++   /* Look for providers ready status. A 5 seconds wait is performed to
++    * avoid a hang here in the event of provider looping, crashing etc
++   */
++   for (;;) {
++       pthread_mutex_lock(&syncMtx);
++       if (prov_rdy_state == -1) {
++         if (count >= 5) break; /* lock will be released later */
++          pthread_mutex_unlock(&syncMtx);
++          sleep(1);
++          count++;
++        }
++        else break; /* lock will be released later */
++   }
+    
+    stopLocalConnectServer();
+    
+@@ -167,7 +203,7 @@ static void stopBroker(void *p)
+ 
+       if (adaptersStopped==0) {
+          pthread_mutex_lock(&sdMtx);
+-         waitTime.tv_sec=time(NULL)+5;
++         waitTime.tv_sec = time(NULL) + sigChldWaitTime;
+          waitTime.tv_nsec=0;
+          if (sa==0) fprintf(stderr,"--- Stopping adapters\n");
+          sa++;
+@@ -175,15 +211,16 @@ static void stopBroker(void *p)
+             rc=pthread_cond_timedwait(&sdCnd,&sdMtx,&waitTime);
+          }
+          else {
+-	   /* no adapters found */
+-	   adaptersStopped=1;
+-	 }
++            fprintf(stderr,"-- All adapters stopped.\n");
++            /* no adapters found */
++            adaptersStopped=1;
++         }
+          pthread_mutex_unlock(&sdMtx);
+       }
+       
+       if (adaptersStopped) {
+          pthread_mutex_lock(&sdMtx);
+-         waitTime.tv_sec=time(NULL)+5;
++         waitTime.tv_sec = time(NULL) + sigChldWaitTime;
+          waitTime.tv_nsec=0;
+          if (sp==0)  fprintf(stderr,"--- Stopping providers\n");
+          sp++;
+@@ -195,15 +232,20 @@ static void stopBroker(void *p)
+       }
+       if (providersStopped) break;
+    }
++
++   mlogf(M_INFO,M_SHOW,"--- %s V" sfcHttpDaemonVersion " stopped - %d\n", name, currentProc);
++
+    remSem();
+    
+    uninit_sfcBroker();
+    uninitProvProcCtl();
+    uninitSocketPairs();
+    sunsetControl();
+-//   uninitGarbageCollector();
++   uninitGarbageCollector();
+    closeLogging();
+  
++   //pthread_mutex_unlock(&syncMtx);
++
+    if (restartBroker) {
+       char *emsg=strerror(errno);
+       execvp("sfcbd",restartArgv);
+@@ -295,6 +337,7 @@ static void handleSigChld(int sig)
+             if (left==0) {
+                fprintf(stderr,"--- Adapters stopped\n");
+                adaptersStopped=1;
++               if (!stopping && !inaHttpdRestart) kill(getpid(),SIGQUIT);
+             }   
+             pthread_attr_init(&tattr);
+             pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);      
+@@ -314,6 +357,37 @@ static void handleSigChld(int sig)
+    errno = oerrno;
+ }
+ 
++static void handleSigUsr2(int sig)
++{
++#ifndef LOCAL_CONNECT_ONLY_ENABLE
++   struct timespec waitTime;
++   int rc, sa=0;
++
++   inaHttpdRestart=1;
++   while(!adaptersStopped) {
++       pthread_mutex_lock(&sdMtx);
++       waitTime.tv_sec=time(NULL)+1; //5
++       waitTime.tv_nsec=0;
++       if (sa==0) fprintf(stderr,"--- Stopping http adapters\n");
++       sa++;
++       if (stopNextAdapter()) {
++          rc=pthread_cond_timedwait(&sdCnd,&sdMtx,&waitTime);
++       }
++       else {
++         /* no adapters found */
++         fprintf(stderr,"--- All http adapters stopped.\n");
++         adaptersStopped=1;
++       }
++       pthread_mutex_unlock(&sdMtx);
++   }
++
++   fprintf(stderr,"--- Restarting http adapters...\n");
++   startHttpd(restartArgc, restartArgv, sslMode);
++   adaptersStopped=0;
++   inaHttpdRestart=0;
++#endif // LOCAL_CONNECT_ONLY_ENABLE
++}
++
+ #ifdef NEEDS_CLEANUP
+ static void handleSigterm(int sig)
+ {
+@@ -378,32 +452,32 @@ static int startHttpd(int argc, char *ar
+      }
+     }
+ 
+-   pid= fork();
++   pid = fork();
+    if (pid < 0) {
+-      char *emsg=strerror(errno);
+-      mlogf(M_ERROR,M_SHOW, "-#- http fork: %s",emsg);
+-      exit(2);
++     char *emsg = strerror(errno);
++     mlogf(M_ERROR, M_SHOW, "-#- http fork: %s", emsg);
++     exit(2);
+    }
+    if (pid == 0) {
+-      currentProc=getpid();
+-      if (httpuid != -1 ) {
+-          // Set the real and effective uids
+-          rc=setreuid(httpuid,httpuid);
+-          if (rc == -1) {
+-              mlogf(M_ERROR,M_SHOW,"--- Changing uid for http failed.\n");
+-              exit(2);
+-          }
+-      }
+-   
+-      if (httpDaemon(argc, argv, sslMode)) {
+-	kill(sfcPid, 3);          /* if port in use, shutdown */
+-      }
+-      closeSocket(&sfcbSockets,cRcv,"startHttpd");
+-      closeSocket(&resultSockets,cAll,"startHttpd");
++     currentProc = getpid();
++     if (!httpSFCB) {
++       // Set the real and effective uids
++       rc = setreuid(httpuid, httpuid);
++       if (rc == -1) {
++         mlogf(M_ERROR, M_SHOW, "--- Changing uid for http failed.\n");
++         exit(2);
++       }
++     }
++     if (httpDaemon(argc, argv, sslMode)) {
++       //kill(sfcPid, 3);          /* if port in use, shutdown */
++                                   /* (don't do this anymore - xxxxxxx) */
++     }
++     closeSocket(&sfcbSockets,cRcv,"startHttpd");
++     closeSocket(&resultSockets,cAll,"startHttpd");
++     exit(0);
+    }
+    else {
+-      addStartedAdapter(pid);
+-      return 0;
++     addStartedAdapter(pid);
+    }
+    return 0;
+ }
+@@ -487,7 +561,7 @@ static void version()
+ int main(int argc, char *argv[])
+ {
+    int c, i;
+-   long tmask = 0, sslMode=0,sslOMode=0, tracelevel=0;
++   long tmask = 0, sslOMode=0, tracelevel=0;
+    char * tracefile = NULL;
+ #ifdef HAVE_UDS
+    int enableUds=0;
+@@ -523,7 +597,7 @@ int main(int argc, char *argv[])
+ 	   { "syslog-level",     required_argument, 0,        'l' },
+ 	   { "trace-components", required_argument, 0,        't' },
+ 	   { "version",          no_argument,       0,        'v' },
+-           { "disable-repository-default-inst-provider", no_argument,       0,        'i' },
++           { "disable-repository-default-inst-provider", no_argument,  0, 'i' },
+ 	   { 0, 0, 0, 0 }
+        };
+ 
+@@ -755,6 +829,7 @@ int main(int argc, char *argv[])
+ 
+    setSignal(SIGSEGV, handleSigSegv,SA_ONESHOT);
+    setSignal(SIGCHLD, handleSigChld,0);
++   setSignal(SIGUSR2, handleSigUsr2,0);
+    
+    processProviderMgrRequests();
+ 
+diff -up sblim-sfcb-1.3.11/support.c.orig sblim-sfcb-1.3.11/support.c
+--- sblim-sfcb-1.3.11/support.c.orig	2016-09-27 13:15:56.781486041 +0200
++++ sblim-sfcb-1.3.11/support.c	2016-09-27 13:15:56.795486047 +0200
+@@ -714,7 +714,10 @@ int init_sfcBroker()
+ 
+ int uninit_sfcBroker()
+ {
+-   if (pReg) pReg->ft->release(pReg);
++   if (pReg) {
++      pReg->ft->release(pReg);
++      pReg = NULL;
++   }
+    return 0;
+ }
+ 
