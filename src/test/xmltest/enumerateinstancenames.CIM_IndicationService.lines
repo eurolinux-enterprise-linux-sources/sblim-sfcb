@@ -1,0 +1,8 @@
+<INSTANCENAME CLASSNAME="CIM_IndicationService">
+<KEYBINDING NAME="CreationClassName">
+<KEYVALUE VALUETYPE="string">CIM_IndicationService</KEYVALUE>
+</KEYBINDING>
+<KEYBINDING NAME="SystemCreationClassName">
+<KEYVALUE VALUETYPE="string">CIM_ComputerSystem</KEYVALUE>
+</KEYBINDING>
+</INSTANCENAME>

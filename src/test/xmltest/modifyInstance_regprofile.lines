@@ -1,0 +1,3 @@
+<IMETHODRESPONSE NAME="ModifyInstance">
+<ERROR CODE="7" DESCRIPTION="The requested operation is not supported"/>
+</IMETHODRESPONSE>
