@@ -1,5 +1,5 @@
 /*
- * $Id: brokerUpc.c,v 1.31 2009/11/09 21:49:11 buccella Exp $
+ * $Id: brokerUpc.c,v 1.33 2011/02/11 23:08:53 buccella Exp $
  *
  * © Copyright IBM Corp. 2005, 2007
  *
@@ -39,7 +39,6 @@
 
 #ifdef SFCB_INCL_INDICATION_SUPPORT 
 #include "selectexp.h"
-extern int indicationEnabled;
 #endif
 
 extern MsgSegment setArgsMsgSegment(const CMPIArgs * args);
@@ -114,20 +113,22 @@ static CMPIStatus deliverIndication(const CMPIBroker* mb, const CMPIContext* ctx
    CMPIStatus st = { CMPI_RC_OK, NULL };
    CMPIArgs *in=NULL;
    CMPIObjectPath *op=NULL;
-   
+   CMPIObjectPath *indop = CMGetObjectPath(ind, &st);
+   int x, classMatch = 0;   
+
    _SFCB_ENTER(TRACE_INDPROVIDER | TRACE_UPCALLS, "deliverIndication");
-   
-   if (indicationEnabled==0) {      
-      _SFCB_TRACE(1,("--- Provider not enabled for indications"));
-      printf("Provider not enabled for indications\n");
-      setStatus(&st,CMPI_RC_ERR_FAILED, "Provider not enabled for indications");
-      _SFCB_RETURN(st);
-   }
 
    NativeSelectExp *se=activFilters;
    
    while (se) {
-     if (se->exp.ft->evaluate(&se->exp,ind,&st)) {
+     /* Check for matching FROM class */
+     for (x=0; x<se->qs->fcNext; x++) {
+       if (CMClassPathIsA(mb, indop, se->qs->fClasses[x], &st)) {
+	 classMatch = 1;
+	 break;
+       }
+     }
+     if (classMatch && se->exp.ft->evaluate(&se->exp,ind,&st)) {
      /*apply a propertyfilter in case the query is not "SELECT * FROM ..." */
         if(se->qs->spNames && se->qs->spNames[0]) {
            ind->ft->setPropertyFilter((CMPIInstance*)ind, (const char**)se->qs->spNames, NULL);

@@ -5,6 +5,10 @@ Enhancements:
 
 - 2441640 mofc needs to import instances for migration
 
+Bugs fixed: 
+
+- 3179149 mofc sigsegv at backend_sfcb:468 w/o correct property name
+
 Changes in 0.8.4
 ================
 

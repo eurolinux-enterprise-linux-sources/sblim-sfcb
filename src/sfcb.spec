@@ -8,7 +8,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
 
 Summary: Small Footprint CIM Broker
 Name: sblim-sfcb
-Version: 1.3.8
+Version: 1.3.11
 Release: 0
 Group: Systems Management/Base
 License: EPL

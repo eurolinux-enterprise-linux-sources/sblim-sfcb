@@ -1,24 +1,23 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,7 +28,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -47,7 +46,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.3"
+#define YYBISON_VERSION "2.4.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -55,17 +54,179 @@
 /* Pure parsers.  */
 #define YYPURE 1
 
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
 /* Substitute the variable and function names.  */
-#define yyparse sfcXmlparse
-#define yylex   sfcXmllex
-#define yyerror sfcXmlerror
-#define yylval  sfcXmllval
-#define yychar  sfcXmlchar
-#define yydebug sfcXmldebug
-#define yynerrs sfcXmlnerrs
+#define yyparse         sfcXmlparse
+#define yylex           sfcXmllex
+#define yyerror         sfcXmlerror
+#define yylval          sfcXmllval
+#define yychar          sfcXmlchar
+#define yydebug         sfcXmldebug
+#define yynerrs         sfcXmlnerrs
+
+
+/* Copy the first part of user declarations.  */
+
+/* Line 189 of yacc.c  */
+#line 1 "cimXmlOps.y"
+
+
+/*
+ * cimXmlOps.y
+ *
+ * (C) Copyright IBM Corp. 2005
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * Author:       Adrian Schuur <schuur@de.ibm.com>
+ *
+ * Description:
+ *
+ * CIM XML grammar for sfcb.
+ *
+*/
+
+
+/*
+**==============================================================================
+**
+** Includes
+**
+**==============================================================================
+*/
+
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include "cimXmlParser.h"
+
+
+//
+// Define the global parser state object:
+//
+
+#define YYPARSE_PARAM parm
+#define YYLEX_PARAM parm
+#define YYERROR_VERBOSE 1
+
+
+/* assumed max number of elements; used for initial malloc */
+#define VALUEARRAY_MAX_START 32
+#define VALUEREFARRAY_MAX_START 32
+#define KEYBINDING_MAX_START 12
+
+extern int yyerror(char*);
+extern int yylex (void *lvalp, ParserControl *parm);
+
+
+static void setRequest(void *parm, void *req, unsigned long size, int type)
+{
+   ((ParserControl*)parm)->reqHdr.cimRequestLength=size;
+   ((ParserControl*)parm)->reqHdr.cimRequest=malloc(size);
+   memcpy(((ParserControl*)parm)->reqHdr.cimRequest,req,size);
+   ((ParserControl*)parm)->reqHdr.opType = type;
+}
+
+static void addProperty(XtokProperties *ps, XtokProperty *p)
+{
+   XtokProperty *np;
+   np=(XtokProperty*)malloc(sizeof(XtokProperty));
+   memcpy(np,p,sizeof(XtokProperty));
+   np->next=NULL;
+   if (ps->last) {
+      ps->last->next=np;
+   }
+   else ps->first=np;
+   ps->last=np;
+}
+
+static void addParamValue(XtokParamValues *vs, XtokParamValue *v)
+{
+   XtokParamValue *nv;
+   nv=(XtokParamValue*)malloc(sizeof(XtokParamValue));
+   memcpy(nv,v,sizeof(XtokParamValue));
+   nv->next=NULL;
+   if (vs->last) {
+      vs->last->next=nv;
+   }
+   else vs->first=nv;
+   vs->last=nv;
+}
+
+static void addQualifier(XtokQualifiers *qs, XtokQualifier *q)
+{
+   XtokQualifier *nq;
+   nq=(XtokQualifier*)malloc(sizeof(XtokQualifier));
+   memcpy(nq,q,sizeof(XtokQualifier));
+   nq->next=NULL;
+   if (qs->last) {
+      qs->last->next=nq;
+   }
+   else qs->first=nq;
+   qs->last=nq;
+}
+
+static void addMethod(XtokMethods *ms, XtokMethod *m)
+{
+   XtokMethod *nm;
+   nm=(XtokMethod*)malloc(sizeof(XtokMethod));
+   memcpy(nm,m,sizeof(XtokMethod));
+   nm->next=NULL;
+   if (ms->last) {
+      ms->last->next=nm;
+   }
+   else ms->first=nm;
+   ms->last=nm;
+}
+
+static void addParam(XtokParams *ps, XtokParam *p)
+{
+   XtokParam *np;
+   np=(XtokParam*)malloc(sizeof(XtokParam));
+   memcpy(np,p,sizeof(XtokParam));
+   np->next=NULL;
+   if (ps->last) {
+      ps->last->next=np;
+   }
+   else ps->first=np;
+   ps->last=np;
+}
+
+
+
+/* Line 189 of yacc.c  */
+#line 212 "cimXmlOps.c"
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
 
 
 /* Tokens.  */
@@ -315,160 +476,13 @@
 
 
 
-/* Copy the first part of user declarations.  */
-#line 1 "cimXmlOps.y"
-
-
-/*
- * cimXmlOps.y
- *
- * (C) Copyright IBM Corp. 2005
- *
- * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE
- * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE
- * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
- *
- * You can obtain a current copy of the Eclipse Public License from
- * http://www.opensource.org/licenses/eclipse-1.0.php
- *
- * Author:       Adrian Schuur <schuur@de.ibm.com>
- *
- * Description:
- *
- * CIM XML grammar for sfcb.
- *
-*/
-
-
-/*
-**==============================================================================
-**
-** Includes
-**
-**==============================================================================
-*/
-
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include "cimXmlParser.h"
-
-
-//
-// Define the global parser state object:
-//
-
-#define YYPARSE_PARAM parm
-#define YYLEX_PARAM parm
-#define YYERROR_VERBOSE 1
-
-
-/* assumed max number of elements; used for initial malloc */
-#define VALUEARRAY_MAX_START 32
-#define VALUEREFARRAY_MAX_START 32
-#define KEYBINDING_MAX_START 12
-
-extern int yyerror(char*);
-extern int yylex (void *lvalp, ParserControl *parm);
-
-
-static void setRequest(void *parm, void *req, unsigned long size, int type)
-{
-   ((ParserControl*)parm)->reqHdr.cimRequestLength=size;
-   ((ParserControl*)parm)->reqHdr.cimRequest=malloc(size);
-   memcpy(((ParserControl*)parm)->reqHdr.cimRequest,req,size);
-   ((ParserControl*)parm)->reqHdr.opType = type;
-}
-
-static void addProperty(XtokProperties *ps, XtokProperty *p)
-{
-   XtokProperty *np;
-   np=(XtokProperty*)malloc(sizeof(XtokProperty));
-   memcpy(np,p,sizeof(XtokProperty));
-   np->next=NULL;
-   if (ps->last) {
-      ps->last->next=np;
-   }
-   else ps->first=np;
-   ps->last=np;
-}
-
-static void addParamValue(XtokParamValues *vs, XtokParamValue *v)
-{
-   XtokParamValue *nv;
-   nv=(XtokParamValue*)malloc(sizeof(XtokParamValue));
-   memcpy(nv,v,sizeof(XtokParamValue));
-   nv->next=NULL;
-   if (vs->last) {
-      vs->last->next=nv;
-   }
-   else vs->first=nv;
-   vs->last=nv;
-}
-
-static void addQualifier(XtokQualifiers *qs, XtokQualifier *q)
-{
-   XtokQualifier *nq;
-   nq=(XtokQualifier*)malloc(sizeof(XtokQualifier));
-   memcpy(nq,q,sizeof(XtokQualifier));
-   nq->next=NULL;
-   if (qs->last) {
-      qs->last->next=nq;
-   }
-   else qs->first=nq;
-   qs->last=nq;
-}
-
-static void addMethod(XtokMethods *ms, XtokMethod *m)
-{
-   XtokMethod *nm;
-   nm=(XtokMethod*)malloc(sizeof(XtokMethod));
-   memcpy(nm,m,sizeof(XtokMethod));
-   nm->next=NULL;
-   if (ms->last) {
-      ms->last->next=nm;
-   }
-   else ms->first=nm;
-   ms->last=nm;
-}
-
-static void addParam(XtokParams *ps, XtokParam *p)
-{
-   XtokParam *np;
-   np=(XtokParam*)malloc(sizeof(XtokParam));
-   memcpy(np,p,sizeof(XtokParam));
-   np->next=NULL;
-   if (ps->last) {
-      ps->last->next=np;
-   }
-   else ps->first=np;
-   ps->last=np;
-}
-
-
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
-
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 142 "cimXmlOps.y"
 {
+
+/* Line 214 of yacc.c  */
+#line 142 "cimXmlOps.y"
+
    int                           intValue;
    char                          boolValue;
    char*                         className;
@@ -591,22 +605,23 @@ typedef union YYSTYPE
    
    XtokScope                     xtokScope;
    
-}
-/* Line 187 of yacc.c.  */
-#line 597 "cimXmlOps.c"
-	YYSTYPE;
+
+
+
+/* Line 214 of yacc.c  */
+#line 613 "cimXmlOps.c"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 216 of yacc.c.  */
-#line 610 "cimXmlOps.c"
+/* Line 264 of yacc.c  */
+#line 625 "cimXmlOps.c"
 
 #ifdef short
 # undef short
@@ -681,14 +696,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int i)
+YYID (int yyi)
 #else
 static int
-YYID (i)
-    int i;
+YYID (yyi)
+    int yyi;
 #endif
 {
-  return i;
+  return yyi;
 }
 #endif
 
@@ -769,9 +784,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -805,12 +820,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
+	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
+	Stack = &yyptr->Stack_alloc;					\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -1717,17 +1732,20 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 #else
 static void
-yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
+yy_stack_print (yybottom, yytop)
+    yytype_int16 *yybottom;
+    yytype_int16 *yytop;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
@@ -1761,11 +1779,11 @@ yy_reduce_print (yyvsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      fprintf (stderr, "   $%d = ", yyi + 1);
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       );
-      fprintf (stderr, "\n");
+      YYFPRINTF (stderr, "\n");
     }
 }
 
@@ -2045,10 +2063,8 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
-
 
 /* Prevent warnings from -Wmissing-prototypes.  */
-
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -2067,10 +2083,9 @@ int yyparse ();
 
 
 
-
-/*----------.
-| yyparse.  |
-`----------*/
+/*-------------------------.
+| yyparse or yypush_parse.  |
+`-------------------------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -2094,22 +2109,46 @@ yyparse ()
 #endif
 #endif
 {
-  /* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
+/* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 
-/* Number of syntax errors so far.  */
-int yynerrs;
+    /* Number of syntax errors so far.  */
+    int yynerrs;
 
-  int yystate;
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       `yyss': related to states.
+       `yyvs': related to semantic values.
+
+       Refer to the stacks thru separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
   int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead token as an internal (translated) token number.  */
+  int yytoken;
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -2117,51 +2156,28 @@ int yynerrs;
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
-
-
-
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
+
+  yytoken = 0;
+  yyss = yyssa;
+  yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
+  yychar = YYEMPTY; /* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
-
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -2191,7 +2207,6 @@ int yynerrs;
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
-
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -2199,7 +2214,6 @@ int yynerrs;
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -2222,9 +2236,8 @@ int yynerrs;
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+	YYSTACK_RELOCATE (yyss_alloc, yyss);
+	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -2235,7 +2248,6 @@ int yynerrs;
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -2245,6 +2257,9 @@ int yynerrs;
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
+  if (yystate == YYFINAL)
+    YYACCEPT;
+
   goto yybackup;
 
 /*-----------.
@@ -2253,16 +2268,16 @@ int yynerrs;
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -2294,20 +2309,16 @@ yybackup:
       goto yyreduce;
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
+  /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -2347,168 +2358,224 @@ yyreduce:
   switch (yyn)
     {
         case 2:
+
+/* Line 1455 of yacc.c  */
 #line 547 "cimXmlOps.y"
     {
     }
     break;
 
   case 3:
+
+/* Line 1455 of yacc.c  */
 #line 553 "cimXmlOps.y"
     {
     }
     break;
 
   case 4:
+
+/* Line 1455 of yacc.c  */
 #line 559 "cimXmlOps.y"
     {
     }
     break;
 
   case 5:
+
+/* Line 1455 of yacc.c  */
 #line 565 "cimXmlOps.y"
     {
     }
     break;
 
   case 6:
+
+/* Line 1455 of yacc.c  */
 #line 571 "cimXmlOps.y"
     {
     }
     break;
 
   case 7:
+
+/* Line 1455 of yacc.c  */
 #line 574 "cimXmlOps.y"
     {
     }
     break;
 
   case 8:
+
+/* Line 1455 of yacc.c  */
 #line 577 "cimXmlOps.y"
     {
     }
     break;
 
   case 9:
+
+/* Line 1455 of yacc.c  */
 #line 580 "cimXmlOps.y"
     {
     }
     break;
 
   case 10:
+
+/* Line 1455 of yacc.c  */
 #line 583 "cimXmlOps.y"
     {
     }
     break;
 
   case 11:
+
+/* Line 1455 of yacc.c  */
 #line 586 "cimXmlOps.y"
     {
     }
     break;
 
   case 12:
+
+/* Line 1455 of yacc.c  */
 #line 589 "cimXmlOps.y"
     {
     }
     break;
 
   case 13:
+
+/* Line 1455 of yacc.c  */
 #line 592 "cimXmlOps.y"
     {
     }
     break;
 
   case 14:
+
+/* Line 1455 of yacc.c  */
 #line 595 "cimXmlOps.y"
     {
     }
     break;
 
   case 15:
+
+/* Line 1455 of yacc.c  */
 #line 598 "cimXmlOps.y"
     {
     }
     break;
 
   case 16:
+
+/* Line 1455 of yacc.c  */
 #line 601 "cimXmlOps.y"
     {
     }
     break;
 
   case 17:
+
+/* Line 1455 of yacc.c  */
 #line 604 "cimXmlOps.y"
     {
     }
     break;
 
   case 18:
+
+/* Line 1455 of yacc.c  */
 #line 607 "cimXmlOps.y"
     {
     }
     break;
 
   case 19:
+
+/* Line 1455 of yacc.c  */
 #line 610 "cimXmlOps.y"
     {
     }
     break;
 
   case 20:
+
+/* Line 1455 of yacc.c  */
 #line 613 "cimXmlOps.y"
     {
     }
     break;
 
   case 21:
+
+/* Line 1455 of yacc.c  */
 #line 616 "cimXmlOps.y"
     {
     }
     break;
 
   case 22:
+
+/* Line 1455 of yacc.c  */
 #line 619 "cimXmlOps.y"
     {
     }
     break;
 
   case 23:
+
+/* Line 1455 of yacc.c  */
 #line 622 "cimXmlOps.y"
     {
     }
     break;
 
   case 24:
+
+/* Line 1455 of yacc.c  */
 #line 625 "cimXmlOps.y"
     {
     }
     break;
 
   case 25:
+
+/* Line 1455 of yacc.c  */
 #line 628 "cimXmlOps.y"
     {
     }
     break;
 
   case 26:
+
+/* Line 1455 of yacc.c  */
 #line 631 "cimXmlOps.y"
     {
     }
     break;
 
   case 27:
+
+/* Line 1455 of yacc.c  */
 #line 634 "cimXmlOps.y"
     {
     }
     break;
 
   case 28:
+
+/* Line 1455 of yacc.c  */
 #line 637 "cimXmlOps.y"
     {
     }
     break;
 
   case 29:
+
+/* Line 1455 of yacc.c  */
 #line 648 "cimXmlOps.y"
     {
        (yyval.xtokMethodCall).op.count = 2;
@@ -2524,6 +2591,8 @@ yyreduce:
     break;
 
   case 30:
+
+/* Line 1455 of yacc.c  */
 #line 660 "cimXmlOps.y"
     {
        (yyval.xtokMethodCall).op.count = 2;
@@ -2538,6 +2607,8 @@ yyreduce:
     break;
 
   case 31:
+
+/* Line 1455 of yacc.c  */
 #line 671 "cimXmlOps.y"
     {
        (yyval.xtokMethodCall).op.count = 2;
@@ -2554,6 +2625,8 @@ yyreduce:
     break;
 
   case 32:
+
+/* Line 1455 of yacc.c  */
 #line 684 "cimXmlOps.y"
     {
        (yyval.xtokMethodCall).op.count = 2;
@@ -2569,6 +2642,8 @@ yyreduce:
     break;
 
   case 33:
+
+/* Line 1455 of yacc.c  */
 #line 699 "cimXmlOps.y"
     {
       (yyval.xtokParamValues).first = NULL;
@@ -2578,6 +2653,8 @@ yyreduce:
     break;
 
   case 34:
+
+/* Line 1455 of yacc.c  */
 #line 705 "cimXmlOps.y"
     {
       addParamValue(&(yyval.xtokParamValues),&(yyvsp[(2) - (2)].xtokParamValue));
@@ -2585,6 +2662,8 @@ yyreduce:
     break;
 
   case 35:
+
+/* Line 1455 of yacc.c  */
 #line 712 "cimXmlOps.y"
     {
        (yyval.xtokParamValue).value.value=NULL;
@@ -2593,6 +2672,8 @@ yyreduce:
     break;
 
   case 36:
+
+/* Line 1455 of yacc.c  */
 #line 717 "cimXmlOps.y"
     {
        (yyval.xtokParamValue).value=(yyvsp[(2) - (3)].xtokValue);
@@ -2606,6 +2687,8 @@ yyreduce:
     break;
 
   case 37:
+
+/* Line 1455 of yacc.c  */
 #line 727 "cimXmlOps.y"
     {
        (yyval.xtokParamValue).valueArray=(yyvsp[(2) - (3)].xtokValueArray);
@@ -2621,6 +2704,8 @@ yyreduce:
     break;
 
   case 38:
+
+/* Line 1455 of yacc.c  */
 #line 739 "cimXmlOps.y"
     {
        (yyval.xtokParamValue).valueRef=(yyvsp[(2) - (3)].xtokValueReference);
@@ -2629,6 +2714,8 @@ yyreduce:
     break;
 
   case 39:
+
+/* Line 1455 of yacc.c  */
 #line 744 "cimXmlOps.y"
     {
        (yyval.xtokParamValue).valueRefArray=(yyvsp[(2) - (3)].xtokValueRefArray);
@@ -2637,6 +2724,8 @@ yyreduce:
     break;
 
   case 40:
+
+/* Line 1455 of yacc.c  */
 #line 755 "cimXmlOps.y"
     {
        (yyval.xtokGetProperty).op.count = 3;
@@ -2650,6 +2739,8 @@ yyreduce:
     break;
 
   case 41:
+
+/* Line 1455 of yacc.c  */
 #line 768 "cimXmlOps.y"
     {
 		(yyval.xtokGetPropertyParm).name = (yyvsp[(2) - (6)].xtokValue).value;
@@ -2658,6 +2749,8 @@ yyreduce:
     break;
 
   case 42:
+
+/* Line 1455 of yacc.c  */
 #line 773 "cimXmlOps.y"
     {
 		(yyval.xtokGetPropertyParm).name = (yyvsp[(5) - (6)].xtokValue).value;
@@ -2666,6 +2759,8 @@ yyreduce:
     break;
 
   case 43:
+
+/* Line 1455 of yacc.c  */
 #line 785 "cimXmlOps.y"
     {
        (yyval.xtokSetProperty).op.count = 3;
@@ -2679,6 +2774,8 @@ yyreduce:
     break;
 
   case 44:
+
+/* Line 1455 of yacc.c  */
 #line 795 "cimXmlOps.y"
     {
        (yyval.xtokSetProperty).op.count = 3;
@@ -2694,6 +2791,8 @@ yyreduce:
     break;
 
   case 45:
+
+/* Line 1455 of yacc.c  */
 #line 810 "cimXmlOps.y"
     {
        (yyval.xtokSetPropertyParmsList).newVal = (yyvsp[(1) - (1)].xtokSetPropertyParms).newVal;
@@ -2703,6 +2802,8 @@ yyreduce:
     break;
 
   case 46:
+
+/* Line 1455 of yacc.c  */
 #line 816 "cimXmlOps.y"
     {
 		if((yyvsp[(2) - (2)].xtokSetPropertyParms).propertyName) {
@@ -2718,6 +2819,8 @@ yyreduce:
     break;
 
   case 47:
+
+/* Line 1455 of yacc.c  */
 #line 831 "cimXmlOps.y"
     {
 		(yyval.xtokSetPropertyParms).instanceName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -2728,6 +2831,8 @@ yyreduce:
     break;
 
   case 48:
+
+/* Line 1455 of yacc.c  */
 #line 838 "cimXmlOps.y"
     {
 		(yyval.xtokSetPropertyParms).propertyName = (yyvsp[(2) - (3)].xtokValue).value;
@@ -2738,6 +2843,8 @@ yyreduce:
     break;
 
   case 49:
+
+/* Line 1455 of yacc.c  */
 #line 845 "cimXmlOps.y"
     {
 		(yyval.xtokSetPropertyParms).newVal = (yyvsp[(2) - (3)].xtokNewValue);
@@ -2747,6 +2854,8 @@ yyreduce:
     break;
 
   case 50:
+
+/* Line 1455 of yacc.c  */
 #line 854 "cimXmlOps.y"
     {
 		if((yyvsp[(1) - (1)].xtokValue).type == typeValue_Instance) {
@@ -2763,6 +2872,8 @@ yyreduce:
     break;
 
   case 51:
+
+/* Line 1455 of yacc.c  */
 #line 867 "cimXmlOps.y"
     {
 		(yyval.xtokNewValue).arr = (yyvsp[(1) - (1)].xtokValueArray);
@@ -2771,6 +2882,8 @@ yyreduce:
     break;
 
   case 52:
+
+/* Line 1455 of yacc.c  */
 #line 872 "cimXmlOps.y"
     {
 		(yyval.xtokNewValue).ref = (yyvsp[(1) - (1)].xtokValueReference);
@@ -2779,6 +2892,8 @@ yyreduce:
     break;
 
   case 53:
+
+/* Line 1455 of yacc.c  */
 #line 883 "cimXmlOps.y"
     {
        (yyval.xtokGetQualifier).op.count = 2;
@@ -2791,6 +2906,8 @@ yyreduce:
     break;
 
   case 54:
+
+/* Line 1455 of yacc.c  */
 #line 895 "cimXmlOps.y"
     {
        (yyval.xtokGetQualifierParm).name = (yyvsp[(2) - (3)].xtokValue).value;
@@ -2798,6 +2915,8 @@ yyreduce:
     break;
 
   case 55:
+
+/* Line 1455 of yacc.c  */
 #line 905 "cimXmlOps.y"
     {
        (yyval.xtokDeleteQualifier).op.count = 2;
@@ -2810,6 +2929,8 @@ yyreduce:
     break;
 
   case 56:
+
+/* Line 1455 of yacc.c  */
 #line 917 "cimXmlOps.y"
     {
        (yyval.xtokDeleteQualifierParm).name = (yyvsp[(2) - (3)].xtokValue).value;
@@ -2817,6 +2938,8 @@ yyreduce:
     break;
 
   case 57:
+
+/* Line 1455 of yacc.c  */
 #line 927 "cimXmlOps.y"
     {
        (yyval.xtokEnumQualifiers).op.count = 2;
@@ -2828,6 +2951,8 @@ yyreduce:
     break;
 
   case 58:
+
+/* Line 1455 of yacc.c  */
 #line 942 "cimXmlOps.y"
     {
        (yyval.xtokSetQualifier).op.count = 3;
@@ -2841,6 +2966,8 @@ yyreduce:
     break;
 
   case 59:
+
+/* Line 1455 of yacc.c  */
 #line 956 "cimXmlOps.y"
     {
        (yyval.xtokSetQualifierParm).qualifierdeclaration = (yyvsp[(2) - (3)].xtokQualifierDeclaration);
@@ -2848,6 +2975,8 @@ yyreduce:
     break;
 
   case 60:
+
+/* Line 1455 of yacc.c  */
 #line 967 "cimXmlOps.y"
     {
        (yyval.xtokGetClass).op.count = 2;
@@ -2864,6 +2993,8 @@ yyreduce:
     break;
 
   case 61:
+
+/* Line 1455 of yacc.c  */
 #line 980 "cimXmlOps.y"
     {
        (yyval.xtokGetClass).op.count = 2;
@@ -2880,6 +3011,8 @@ yyreduce:
     break;
 
   case 62:
+
+/* Line 1455 of yacc.c  */
 #line 996 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParmsList).flags=(yyvsp[(1) - (1)].xtokGetClassParms).flags;
@@ -2894,6 +3027,8 @@ yyreduce:
     break;
 
   case 63:
+
+/* Line 1455 of yacc.c  */
 #line 1007 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParmsList).flags=(yyvsp[(1) - (2)].xtokGetClassParmsList).flags|(yyvsp[(2) - (2)].xtokGetClassParms).flags;
@@ -2908,6 +3043,8 @@ yyreduce:
     break;
 
   case 64:
+
+/* Line 1455 of yacc.c  */
 #line 1021 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParms).className = (yyvsp[(2) - (3)].className);
@@ -2919,6 +3056,8 @@ yyreduce:
     break;
 
   case 65:
+
+/* Line 1455 of yacc.c  */
 #line 1029 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_localOnly : 0 ;
@@ -2929,6 +3068,8 @@ yyreduce:
     break;
 
   case 66:
+
+/* Line 1455 of yacc.c  */
 #line 1036 "cimXmlOps.y"
     {
        memset(&(yyval.xtokGetClassParms), 0, sizeof((yyval.xtokGetClassParms)));
@@ -2936,6 +3077,8 @@ yyreduce:
     break;
 
   case 67:
+
+/* Line 1455 of yacc.c  */
 #line 1040 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -2946,6 +3089,8 @@ yyreduce:
     break;
 
   case 68:
+
+/* Line 1455 of yacc.c  */
 #line 1047 "cimXmlOps.y"
     {
        memset(&(yyval.xtokGetClassParms), 0, sizeof((yyval.xtokGetClassParms)));
@@ -2953,6 +3098,8 @@ yyreduce:
     break;
 
   case 69:
+
+/* Line 1455 of yacc.c  */
 #line 1051 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeClassOrigin : 0 ;
@@ -2963,6 +3110,8 @@ yyreduce:
     break;
 
   case 70:
+
+/* Line 1455 of yacc.c  */
 #line 1058 "cimXmlOps.y"
     {
        memset(&(yyval.xtokGetClassParms), 0, sizeof((yyval.xtokGetClassParms)));
@@ -2970,6 +3119,8 @@ yyreduce:
     break;
 
   case 71:
+
+/* Line 1455 of yacc.c  */
 #line 1062 "cimXmlOps.y"
     {
        (yyval.xtokGetClassParms).propertyList=(yyvsp[(2) - (3)].xtokValueArray);
@@ -2980,6 +3131,8 @@ yyreduce:
     break;
 
   case 72:
+
+/* Line 1455 of yacc.c  */
 #line 1069 "cimXmlOps.y"
     {
        memset(&(yyval.xtokGetClassParms), 0, sizeof((yyval.xtokGetClassParms)));
@@ -2987,6 +3140,8 @@ yyreduce:
     break;
 
   case 73:
+
+/* Line 1455 of yacc.c  */
 #line 1081 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassNames).op.count = 2;
@@ -3000,6 +3155,8 @@ yyreduce:
     break;
 
   case 74:
+
+/* Line 1455 of yacc.c  */
 #line 1091 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassNames).op.count = 2;
@@ -3013,6 +3170,8 @@ yyreduce:
     break;
 
   case 75:
+
+/* Line 1455 of yacc.c  */
 #line 1104 "cimXmlOps.y"
     {
        if ((yyvsp[(1) - (1)].xtokEnumClassNamesParms).className) (yyval.xtokEnumClassNamesParmsList).className=(yyvsp[(1) - (1)].xtokEnumClassNamesParms).className;
@@ -3021,6 +3180,8 @@ yyreduce:
     break;
 
   case 76:
+
+/* Line 1455 of yacc.c  */
 #line 1109 "cimXmlOps.y"
     {
        if ((yyvsp[(2) - (2)].xtokEnumClassNamesParms).className) (yyval.xtokEnumClassNamesParmsList).className=(yyvsp[(2) - (2)].xtokEnumClassNamesParms).className;
@@ -3029,6 +3190,8 @@ yyreduce:
     break;
 
   case 77:
+
+/* Line 1455 of yacc.c  */
 #line 1117 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassNamesParms).className = NULL;
@@ -3037,6 +3200,8 @@ yyreduce:
     break;
 
   case 78:
+
+/* Line 1455 of yacc.c  */
 #line 1122 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassNamesParms).className = (yyvsp[(2) - (3)].className);
@@ -3045,6 +3210,8 @@ yyreduce:
     break;
 
   case 79:
+
+/* Line 1455 of yacc.c  */
 #line 1127 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassNamesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_deepInheritance : 0 ;
@@ -3054,6 +3221,8 @@ yyreduce:
     break;
 
   case 80:
+
+/* Line 1455 of yacc.c  */
 #line 1133 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassNamesParms).className = NULL;
@@ -3062,6 +3231,8 @@ yyreduce:
     break;
 
   case 81:
+
+/* Line 1455 of yacc.c  */
 #line 1145 "cimXmlOps.y"
     {
        (yyval.xtokEnumClasses).op.count = 2;
@@ -3075,6 +3246,8 @@ yyreduce:
     break;
 
   case 82:
+
+/* Line 1455 of yacc.c  */
 #line 1155 "cimXmlOps.y"
     {
        (yyval.xtokEnumClasses).op.count = 2;
@@ -3088,6 +3261,8 @@ yyreduce:
     break;
 
   case 83:
+
+/* Line 1455 of yacc.c  */
 #line 1168 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParmsList).flags=(yyvsp[(1) - (1)].xtokEnumClassesParms).flags;
@@ -3097,6 +3272,8 @@ yyreduce:
     break;
 
   case 84:
+
+/* Line 1455 of yacc.c  */
 #line 1174 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParmsList).flags=(yyvsp[(1) - (2)].xtokEnumClassesParmsList).flags|(yyvsp[(2) - (2)].xtokEnumClassesParms).flags;
@@ -3106,6 +3283,8 @@ yyreduce:
     break;
 
   case 85:
+
+/* Line 1455 of yacc.c  */
 #line 1183 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumClassesParms), 0, sizeof((yyval.xtokEnumClassesParms)));
@@ -3113,6 +3292,8 @@ yyreduce:
     break;
 
   case 86:
+
+/* Line 1455 of yacc.c  */
 #line 1187 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParms).className = (yyvsp[(2) - (3)].className);
@@ -3121,6 +3302,8 @@ yyreduce:
     break;
 
   case 87:
+
+/* Line 1455 of yacc.c  */
 #line 1192 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumClassesParms), 0, sizeof((yyval.xtokEnumClassesParms)));
@@ -3128,6 +3311,8 @@ yyreduce:
     break;
 
   case 88:
+
+/* Line 1455 of yacc.c  */
 #line 1196 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_deepInheritance : 0 ;
@@ -3137,6 +3322,8 @@ yyreduce:
     break;
 
   case 89:
+
+/* Line 1455 of yacc.c  */
 #line 1202 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumClassesParms), 0, sizeof((yyval.xtokEnumClassesParms)));
@@ -3144,6 +3331,8 @@ yyreduce:
     break;
 
   case 90:
+
+/* Line 1455 of yacc.c  */
 #line 1206 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_localOnly : 0 ;
@@ -3153,6 +3342,8 @@ yyreduce:
     break;
 
   case 91:
+
+/* Line 1455 of yacc.c  */
 #line 1212 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumClassesParms), 0, sizeof((yyval.xtokEnumClassesParms)));
@@ -3160,6 +3351,8 @@ yyreduce:
     break;
 
   case 92:
+
+/* Line 1455 of yacc.c  */
 #line 1216 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -3169,6 +3362,8 @@ yyreduce:
     break;
 
   case 93:
+
+/* Line 1455 of yacc.c  */
 #line 1222 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumClassesParms), 0, sizeof((yyval.xtokEnumClassesParms)));
@@ -3176,6 +3371,8 @@ yyreduce:
     break;
 
   case 94:
+
+/* Line 1455 of yacc.c  */
 #line 1226 "cimXmlOps.y"
     {
        (yyval.xtokEnumClassesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeClassOrigin : 0 ;
@@ -3185,6 +3382,8 @@ yyreduce:
     break;
 
   case 95:
+
+/* Line 1455 of yacc.c  */
 #line 1239 "cimXmlOps.y"
     {
        (yyval.xtokGetInstance).op.count = 2;
@@ -3201,6 +3400,8 @@ yyreduce:
     break;
 
   case 96:
+
+/* Line 1455 of yacc.c  */
 #line 1252 "cimXmlOps.y"
     {
        (yyval.xtokGetInstance).op.count = 2;
@@ -3218,6 +3419,8 @@ yyreduce:
     break;
 
   case 97:
+
+/* Line 1455 of yacc.c  */
 #line 1269 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParmsList).flags=(yyvsp[(1) - (1)].xtokGetInstanceParms).flags;
@@ -3232,6 +3435,8 @@ yyreduce:
     break;
 
   case 98:
+
+/* Line 1455 of yacc.c  */
 #line 1280 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParmsList).flags=(yyvsp[(1) - (2)].xtokGetInstanceParmsList).flags|(yyvsp[(2) - (2)].xtokGetInstanceParms).flags;
@@ -3246,6 +3451,8 @@ yyreduce:
     break;
 
   case 99:
+
+/* Line 1455 of yacc.c  */
 #line 1294 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParms).instanceName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -3257,6 +3464,8 @@ yyreduce:
     break;
 
   case 100:
+
+/* Line 1455 of yacc.c  */
 #line 1302 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_localOnly : 0 ;
@@ -3267,6 +3476,8 @@ yyreduce:
     break;
 
   case 101:
+
+/* Line 1455 of yacc.c  */
 #line 1309 "cimXmlOps.y"
     {
        memset(&(yyval.xtokGetInstanceParms), 0, sizeof((yyval.xtokGetInstanceParms)));
@@ -3274,6 +3485,8 @@ yyreduce:
     break;
 
   case 102:
+
+/* Line 1455 of yacc.c  */
 #line 1313 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -3284,6 +3497,8 @@ yyreduce:
     break;
 
   case 103:
+
+/* Line 1455 of yacc.c  */
 #line 1320 "cimXmlOps.y"
     {
       memset(&(yyval.xtokGetInstanceParms), 0, sizeof((yyval.xtokGetInstanceParms)));
@@ -3291,6 +3506,8 @@ yyreduce:
     break;
 
   case 104:
+
+/* Line 1455 of yacc.c  */
 #line 1324 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeClassOrigin : 0 ;
@@ -3301,6 +3518,8 @@ yyreduce:
     break;
 
   case 105:
+
+/* Line 1455 of yacc.c  */
 #line 1331 "cimXmlOps.y"
     {
       memset(&(yyval.xtokGetInstanceParms), 0, sizeof((yyval.xtokGetInstanceParms)));
@@ -3308,6 +3527,8 @@ yyreduce:
     break;
 
   case 106:
+
+/* Line 1455 of yacc.c  */
 #line 1335 "cimXmlOps.y"
     {
        (yyval.xtokGetInstanceParms).propertyList=(yyvsp[(2) - (3)].xtokValueArray);
@@ -3318,6 +3539,8 @@ yyreduce:
     break;
 
   case 107:
+
+/* Line 1455 of yacc.c  */
 #line 1342 "cimXmlOps.y"
     {
       memset(&(yyval.xtokGetInstanceParms), 0, sizeof((yyval.xtokGetInstanceParms)));
@@ -3325,6 +3548,8 @@ yyreduce:
     break;
 
   case 108:
+
+/* Line 1455 of yacc.c  */
 #line 1355 "cimXmlOps.y"
     {
        (yyval.xtokCreateClass).op.count = 3;
@@ -3338,6 +3563,8 @@ yyreduce:
     break;
 
   case 109:
+
+/* Line 1455 of yacc.c  */
 #line 1365 "cimXmlOps.y"
     {
        (yyval.xtokCreateClass).op.count = 3;
@@ -3352,6 +3579,8 @@ yyreduce:
     break;
 
   case 110:
+
+/* Line 1455 of yacc.c  */
 #line 1379 "cimXmlOps.y"
     {
        (yyval.xtokCreateClassParm).cls = (yyvsp[(2) - (3)].xtokClass);
@@ -3359,6 +3588,8 @@ yyreduce:
     break;
 
   case 111:
+
+/* Line 1455 of yacc.c  */
 #line 1392 "cimXmlOps.y"
     {
        (yyval.xtokCreateInstance).op.count = 2;
@@ -3371,6 +3602,8 @@ yyreduce:
     break;
 
   case 112:
+
+/* Line 1455 of yacc.c  */
 #line 1401 "cimXmlOps.y"
     {
        (yyval.xtokCreateInstance).op.count = 2;
@@ -3384,6 +3617,8 @@ yyreduce:
     break;
 
   case 113:
+
+/* Line 1455 of yacc.c  */
 #line 1415 "cimXmlOps.y"
     {
        (yyval.xtokCreateInstanceParm).instance = (yyvsp[(2) - (3)].xtokInstance);
@@ -3391,6 +3626,8 @@ yyreduce:
     break;
 
   case 114:
+
+/* Line 1455 of yacc.c  */
 #line 1427 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstance).op.count = 2;
@@ -3406,6 +3643,8 @@ yyreduce:
     break;
 
   case 115:
+
+/* Line 1455 of yacc.c  */
 #line 1439 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstance).op.count = 2;
@@ -3422,6 +3661,8 @@ yyreduce:
     break;
 
   case 116:
+
+/* Line 1455 of yacc.c  */
 #line 1455 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstanceParmsList).flags=(yyvsp[(1) - (1)].xtokModifyInstanceParms).flags;
@@ -3436,6 +3677,8 @@ yyreduce:
     break;
 
   case 117:
+
+/* Line 1455 of yacc.c  */
 #line 1466 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstanceParmsList).flags=(yyvsp[(1) - (2)].xtokModifyInstanceParmsList).flags|(yyvsp[(2) - (2)].xtokModifyInstanceParms).flags;
@@ -3450,6 +3693,8 @@ yyreduce:
     break;
 
   case 118:
+
+/* Line 1455 of yacc.c  */
 #line 1481 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstanceParms).namedInstance=(yyvsp[(2) - (3)].xtokNamedInstance);
@@ -3461,6 +3706,8 @@ yyreduce:
     break;
 
   case 119:
+
+/* Line 1455 of yacc.c  */
 #line 1489 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstanceParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -3471,6 +3718,8 @@ yyreduce:
     break;
 
   case 120:
+
+/* Line 1455 of yacc.c  */
 #line 1496 "cimXmlOps.y"
     {
        memset(&(yyval.xtokModifyInstanceParms), 0, sizeof((yyval.xtokModifyInstanceParms)));
@@ -3478,6 +3727,8 @@ yyreduce:
     break;
 
   case 121:
+
+/* Line 1455 of yacc.c  */
 #line 1500 "cimXmlOps.y"
     {
        (yyval.xtokModifyInstanceParms).propertyList=(yyvsp[(2) - (3)].xtokValueArray);
@@ -3488,6 +3739,8 @@ yyreduce:
     break;
 
   case 122:
+
+/* Line 1455 of yacc.c  */
 #line 1507 "cimXmlOps.y"
     {
        memset(&(yyval.xtokModifyInstanceParms), 0, sizeof((yyval.xtokModifyInstanceParms)));
@@ -3495,6 +3748,8 @@ yyreduce:
     break;
 
   case 123:
+
+/* Line 1455 of yacc.c  */
 #line 1519 "cimXmlOps.y"
     {
        (yyval.xtokDeleteClass).op.count = 2;
@@ -3507,6 +3762,8 @@ yyreduce:
     break;
 
   case 124:
+
+/* Line 1455 of yacc.c  */
 #line 1528 "cimXmlOps.y"
     {
        (yyval.xtokDeleteClass).op.count = 2;
@@ -3520,6 +3777,8 @@ yyreduce:
     break;
 
   case 125:
+
+/* Line 1455 of yacc.c  */
 #line 1542 "cimXmlOps.y"
     {
        (yyval.xtokDeleteClassParm).className = (yyvsp[(2) - (3)].className);
@@ -3527,6 +3786,8 @@ yyreduce:
     break;
 
   case 126:
+
+/* Line 1455 of yacc.c  */
 #line 1554 "cimXmlOps.y"
     {
        (yyval.xtokDeleteInstance).op.count = 2;
@@ -3539,6 +3800,8 @@ yyreduce:
     break;
 
   case 127:
+
+/* Line 1455 of yacc.c  */
 #line 1563 "cimXmlOps.y"
     {
        (yyval.xtokDeleteInstance).op.count = 2;
@@ -3552,6 +3815,8 @@ yyreduce:
     break;
 
   case 128:
+
+/* Line 1455 of yacc.c  */
 #line 1577 "cimXmlOps.y"
     {
        (yyval.xtokDeleteInstanceParm).instanceName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -3559,6 +3824,8 @@ yyreduce:
     break;
 
   case 129:
+
+/* Line 1455 of yacc.c  */
 #line 1590 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstanceNames).op.count = 2;
@@ -3571,6 +3838,8 @@ yyreduce:
     break;
 
   case 130:
+
+/* Line 1455 of yacc.c  */
 #line 1608 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstances).op.count = 2;
@@ -3586,6 +3855,8 @@ yyreduce:
     break;
 
   case 131:
+
+/* Line 1455 of yacc.c  */
 #line 1620 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstances).op.count = 2;
@@ -3601,6 +3872,8 @@ yyreduce:
     break;
 
   case 132:
+
+/* Line 1455 of yacc.c  */
 #line 1635 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParmsList).flags=(yyvsp[(1) - (1)].xtokEnumInstancesParms).flags;
@@ -3614,6 +3887,8 @@ yyreduce:
     break;
 
   case 133:
+
+/* Line 1455 of yacc.c  */
 #line 1645 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParmsList).flags=(yyvsp[(1) - (2)].xtokEnumInstancesParmsList).flags|(yyvsp[(2) - (2)].xtokEnumInstancesParms).flags;
@@ -3627,6 +3902,8 @@ yyreduce:
     break;
 
   case 134:
+
+/* Line 1455 of yacc.c  */
 #line 1658 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParms).className = (yyvsp[(2) - (3)].className);
@@ -3637,6 +3914,8 @@ yyreduce:
     break;
 
   case 135:
+
+/* Line 1455 of yacc.c  */
 #line 1665 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_localOnly : 0 ;
@@ -3648,6 +3927,8 @@ yyreduce:
     break;
 
   case 136:
+
+/* Line 1455 of yacc.c  */
 #line 1673 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumInstancesParms), 0, sizeof((yyval.xtokEnumInstancesParms)));
@@ -3655,6 +3936,8 @@ yyreduce:
     break;
 
   case 137:
+
+/* Line 1455 of yacc.c  */
 #line 1677 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -3666,6 +3949,8 @@ yyreduce:
     break;
 
   case 138:
+
+/* Line 1455 of yacc.c  */
 #line 1685 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumInstancesParms), 0, sizeof((yyval.xtokEnumInstancesParms)));
@@ -3673,6 +3958,8 @@ yyreduce:
     break;
 
   case 139:
+
+/* Line 1455 of yacc.c  */
 #line 1689 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_deepInheritance : 0 ;
@@ -3684,6 +3971,8 @@ yyreduce:
     break;
 
   case 140:
+
+/* Line 1455 of yacc.c  */
 #line 1697 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumInstancesParms), 0, sizeof((yyval.xtokEnumInstancesParms)));
@@ -3691,6 +3980,8 @@ yyreduce:
     break;
 
   case 141:
+
+/* Line 1455 of yacc.c  */
 #line 1701 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeClassOrigin : 0 ;
@@ -3702,6 +3993,8 @@ yyreduce:
     break;
 
   case 142:
+
+/* Line 1455 of yacc.c  */
 #line 1709 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumInstancesParms), 0, sizeof((yyval.xtokEnumInstancesParms)));
@@ -3709,6 +4002,8 @@ yyreduce:
     break;
 
   case 143:
+
+/* Line 1455 of yacc.c  */
 #line 1713 "cimXmlOps.y"
     {
        (yyval.xtokEnumInstancesParms).propertyList=(yyvsp[(2) - (3)].xtokValueArray);
@@ -3719,6 +4014,8 @@ yyreduce:
     break;
 
   case 144:
+
+/* Line 1455 of yacc.c  */
 #line 1720 "cimXmlOps.y"
     {
        memset(&(yyval.xtokEnumInstancesParms), 0, sizeof((yyval.xtokEnumInstancesParms)));
@@ -3726,6 +4023,8 @@ yyreduce:
     break;
 
   case 145:
+
+/* Line 1455 of yacc.c  */
 #line 1736 "cimXmlOps.y"
     {
        (yyval.xtokExecQuery).op.count = 3;
@@ -3739,6 +4038,8 @@ yyreduce:
     break;
 
   case 146:
+
+/* Line 1455 of yacc.c  */
 #line 1748 "cimXmlOps.y"
     {
        (yyval.xtokExecQuery).op.count = 3;
@@ -3752,6 +4053,8 @@ yyreduce:
     break;
 
   case 147:
+
+/* Line 1455 of yacc.c  */
 #line 1767 "cimXmlOps.y"
     {
        (yyval.xtokAssociators).op.count = 6;
@@ -3772,6 +4075,8 @@ yyreduce:
     break;
 
   case 148:
+
+/* Line 1455 of yacc.c  */
 #line 1784 "cimXmlOps.y"
     {
        (yyval.xtokAssociators).op.count = 6;
@@ -3793,6 +4098,8 @@ yyreduce:
     break;
 
   case 149:
+
+/* Line 1455 of yacc.c  */
 #line 1805 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParmsList).flags=(yyvsp[(1) - (1)].xtokAssociatorsParms).flags;
@@ -3813,6 +4120,8 @@ yyreduce:
     break;
 
   case 150:
+
+/* Line 1455 of yacc.c  */
 #line 1822 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParmsList).flags=(yyvsp[(1) - (2)].xtokAssociatorsParmsList).flags|(yyvsp[(2) - (2)].xtokAssociatorsParms).flags;
@@ -3833,6 +4142,8 @@ yyreduce:
     break;
 
   case 151:
+
+/* Line 1455 of yacc.c  */
 #line 1842 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).objectName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -3845,6 +4156,8 @@ yyreduce:
     break;
 
   case 152:
+
+/* Line 1455 of yacc.c  */
 #line 1851 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).assocClass = (yyvsp[(2) - (3)].className);
@@ -3856,6 +4169,8 @@ yyreduce:
     break;
 
   case 153:
+
+/* Line 1455 of yacc.c  */
 #line 1859 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3863,6 +4178,8 @@ yyreduce:
     break;
 
   case 154:
+
+/* Line 1455 of yacc.c  */
 #line 1863 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).resultClass = (yyvsp[(2) - (3)].className);
@@ -3874,6 +4191,8 @@ yyreduce:
     break;
 
   case 155:
+
+/* Line 1455 of yacc.c  */
 #line 1871 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3881,6 +4200,8 @@ yyreduce:
     break;
 
   case 156:
+
+/* Line 1455 of yacc.c  */
 #line 1875 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).role = (yyvsp[(2) - (3)].xtokValue).value;
@@ -3892,6 +4213,8 @@ yyreduce:
     break;
 
   case 157:
+
+/* Line 1455 of yacc.c  */
 #line 1883 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3899,6 +4222,8 @@ yyreduce:
     break;
 
   case 158:
+
+/* Line 1455 of yacc.c  */
 #line 1887 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).resultRole = (yyvsp[(2) - (3)].xtokValue).value;
@@ -3910,6 +4235,8 @@ yyreduce:
     break;
 
   case 159:
+
+/* Line 1455 of yacc.c  */
 #line 1895 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3917,6 +4244,8 @@ yyreduce:
     break;
 
   case 160:
+
+/* Line 1455 of yacc.c  */
 #line 1899 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -3929,6 +4258,8 @@ yyreduce:
     break;
 
   case 161:
+
+/* Line 1455 of yacc.c  */
 #line 1908 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3936,6 +4267,8 @@ yyreduce:
     break;
 
   case 162:
+
+/* Line 1455 of yacc.c  */
 #line 1912 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeClassOrigin : 0 ;
@@ -3948,6 +4281,8 @@ yyreduce:
     break;
 
   case 163:
+
+/* Line 1455 of yacc.c  */
 #line 1921 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3955,6 +4290,8 @@ yyreduce:
     break;
 
   case 164:
+
+/* Line 1455 of yacc.c  */
 #line 1925 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorsParms).propertyList=(yyvsp[(2) - (3)].xtokValueArray);
@@ -3965,6 +4302,8 @@ yyreduce:
     break;
 
   case 165:
+
+/* Line 1455 of yacc.c  */
 #line 1932 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorsParms), 0, sizeof((yyval.xtokAssociatorsParms)));
@@ -3972,6 +4311,8 @@ yyreduce:
     break;
 
   case 166:
+
+/* Line 1455 of yacc.c  */
 #line 1947 "cimXmlOps.y"
     {
        (yyval.xtokReferences).op.count = 4;
@@ -3990,6 +4331,8 @@ yyreduce:
     break;
 
   case 167:
+
+/* Line 1455 of yacc.c  */
 #line 1962 "cimXmlOps.y"
     {
        (yyval.xtokReferences).op.count = 4;
@@ -4009,6 +4352,8 @@ yyreduce:
     break;
 
   case 168:
+
+/* Line 1455 of yacc.c  */
 #line 1981 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParmsList).flags=(yyvsp[(1) - (1)].xtokReferencesParms).flags;
@@ -4027,6 +4372,8 @@ yyreduce:
     break;
 
   case 169:
+
+/* Line 1455 of yacc.c  */
 #line 1996 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParmsList).flags=(yyvsp[(1) - (2)].xtokReferencesParmsList).flags|(yyvsp[(2) - (2)].xtokReferencesParms).flags;
@@ -4045,6 +4392,8 @@ yyreduce:
     break;
 
   case 170:
+
+/* Line 1455 of yacc.c  */
 #line 2014 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParms).objectName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -4057,6 +4406,8 @@ yyreduce:
     break;
 
   case 171:
+
+/* Line 1455 of yacc.c  */
 #line 2023 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParms).resultClass = (yyvsp[(2) - (3)].className);
@@ -4068,6 +4419,8 @@ yyreduce:
     break;
 
   case 172:
+
+/* Line 1455 of yacc.c  */
 #line 2031 "cimXmlOps.y"
     {
        memset(&(yyval.xtokReferencesParms), 0, sizeof((yyval.xtokReferencesParms)));
@@ -4075,6 +4428,8 @@ yyreduce:
     break;
 
   case 173:
+
+/* Line 1455 of yacc.c  */
 #line 2035 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParms).role = (yyvsp[(2) - (3)].xtokValue).value;
@@ -4086,6 +4441,8 @@ yyreduce:
     break;
 
   case 174:
+
+/* Line 1455 of yacc.c  */
 #line 2043 "cimXmlOps.y"
     {
        memset(&(yyval.xtokReferencesParms), 0, sizeof((yyval.xtokReferencesParms)));
@@ -4093,6 +4450,8 @@ yyreduce:
     break;
 
   case 175:
+
+/* Line 1455 of yacc.c  */
 #line 2047 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeQualifiers : 0 ;
@@ -4105,6 +4464,8 @@ yyreduce:
     break;
 
   case 176:
+
+/* Line 1455 of yacc.c  */
 #line 2056 "cimXmlOps.y"
     {
        memset(&(yyval.xtokReferencesParms), 0, sizeof((yyval.xtokReferencesParms)));
@@ -4112,6 +4473,8 @@ yyreduce:
     break;
 
   case 177:
+
+/* Line 1455 of yacc.c  */
 #line 2060 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParms).flags = (yyvsp[(2) - (3)].boolValue) ? FL_includeClassOrigin : 0 ;
@@ -4124,6 +4487,8 @@ yyreduce:
     break;
 
   case 178:
+
+/* Line 1455 of yacc.c  */
 #line 2069 "cimXmlOps.y"
     {
        memset(&(yyval.xtokReferencesParms), 0, sizeof((yyval.xtokReferencesParms)));
@@ -4131,6 +4496,8 @@ yyreduce:
     break;
 
   case 179:
+
+/* Line 1455 of yacc.c  */
 #line 2073 "cimXmlOps.y"
     {
        (yyval.xtokReferencesParms).propertyList=(yyvsp[(2) - (3)].xtokValueArray);
@@ -4141,6 +4508,8 @@ yyreduce:
     break;
 
   case 180:
+
+/* Line 1455 of yacc.c  */
 #line 2080 "cimXmlOps.y"
     {
        memset(&(yyval.xtokReferencesParms), 0, sizeof((yyval.xtokReferencesParms)));
@@ -4148,6 +4517,8 @@ yyreduce:
     break;
 
   case 181:
+
+/* Line 1455 of yacc.c  */
 #line 2093 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNames).op.count = 6;
@@ -4165,6 +4536,8 @@ yyreduce:
     break;
 
   case 182:
+
+/* Line 1455 of yacc.c  */
 #line 2107 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNames).op.count = 6;
@@ -4182,6 +4555,8 @@ yyreduce:
     break;
 
   case 183:
+
+/* Line 1455 of yacc.c  */
 #line 2124 "cimXmlOps.y"
     {
        if ((yyvsp[(1) - (1)].xtokAssociatorNamesParms).objNameSet)  {
@@ -4196,6 +4571,8 @@ yyreduce:
     break;
 
   case 184:
+
+/* Line 1455 of yacc.c  */
 #line 2135 "cimXmlOps.y"
     {
        if ((yyvsp[(2) - (2)].xtokAssociatorNamesParms).assocClass) (yyval.xtokAssociatorNamesParmsList).assocClass=(yyvsp[(2) - (2)].xtokAssociatorNamesParms).assocClass;
@@ -4210,6 +4587,8 @@ yyreduce:
     break;
 
   case 185:
+
+/* Line 1455 of yacc.c  */
 #line 2149 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNamesParms).objectName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -4219,6 +4598,8 @@ yyreduce:
     break;
 
   case 186:
+
+/* Line 1455 of yacc.c  */
 #line 2155 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNamesParms).assocClass = (yyvsp[(2) - (3)].className);
@@ -4228,6 +4609,8 @@ yyreduce:
     break;
 
   case 187:
+
+/* Line 1455 of yacc.c  */
 #line 2161 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorNamesParms), 0, sizeof((yyval.xtokAssociatorNamesParms)));
@@ -4235,6 +4618,8 @@ yyreduce:
     break;
 
   case 188:
+
+/* Line 1455 of yacc.c  */
 #line 2165 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNamesParms).resultClass = (yyvsp[(2) - (3)].className);
@@ -4244,6 +4629,8 @@ yyreduce:
     break;
 
   case 189:
+
+/* Line 1455 of yacc.c  */
 #line 2171 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorNamesParms), 0, sizeof((yyval.xtokAssociatorNamesParms)));
@@ -4251,6 +4638,8 @@ yyreduce:
     break;
 
   case 190:
+
+/* Line 1455 of yacc.c  */
 #line 2175 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNamesParms).role = (yyvsp[(2) - (3)].xtokValue).value;
@@ -4260,6 +4649,8 @@ yyreduce:
     break;
 
   case 191:
+
+/* Line 1455 of yacc.c  */
 #line 2181 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorNamesParms), 0, sizeof((yyval.xtokAssociatorNamesParms)));
@@ -4267,6 +4658,8 @@ yyreduce:
     break;
 
   case 192:
+
+/* Line 1455 of yacc.c  */
 #line 2185 "cimXmlOps.y"
     {
        (yyval.xtokAssociatorNamesParms).resultRole = (yyvsp[(2) - (3)].xtokValue).value;
@@ -4276,6 +4669,8 @@ yyreduce:
     break;
 
   case 193:
+
+/* Line 1455 of yacc.c  */
 #line 2191 "cimXmlOps.y"
     {
        memset(&(yyval.xtokAssociatorNamesParms), 0, sizeof((yyval.xtokAssociatorNamesParms)));
@@ -4283,6 +4678,8 @@ yyreduce:
     break;
 
   case 194:
+
+/* Line 1455 of yacc.c  */
 #line 2205 "cimXmlOps.y"
     {
        (yyval.xtokReferenceNames).op.count = 4;
@@ -4298,6 +4695,8 @@ yyreduce:
     break;
 
   case 195:
+
+/* Line 1455 of yacc.c  */
 #line 2217 "cimXmlOps.y"
     {
        (yyval.xtokReferenceNames).op.count = 4;
@@ -4314,6 +4713,8 @@ yyreduce:
     break;
 
   case 196:
+
+/* Line 1455 of yacc.c  */
 #line 2233 "cimXmlOps.y"
     {
       if ((yyvsp[(1) - (1)].xtokReferenceNamesParms).objNameSet)  {
@@ -4326,6 +4727,8 @@ yyreduce:
     break;
 
   case 197:
+
+/* Line 1455 of yacc.c  */
 #line 2242 "cimXmlOps.y"
     {
        if((yyvsp[(2) - (2)].xtokReferenceNamesParms).objNameSet) {
@@ -4338,6 +4741,8 @@ yyreduce:
     break;
 
   case 198:
+
+/* Line 1455 of yacc.c  */
 #line 2254 "cimXmlOps.y"
     {
        (yyval.xtokReferenceNamesParms).objectName = (yyvsp[(2) - (3)].xtokInstanceName);
@@ -4347,6 +4752,8 @@ yyreduce:
     break;
 
   case 199:
+
+/* Line 1455 of yacc.c  */
 #line 2260 "cimXmlOps.y"
     {
        (yyval.xtokReferenceNamesParms).resultClass = (yyvsp[(2) - (3)].className);
@@ -4356,6 +4763,8 @@ yyreduce:
     break;
 
   case 200:
+
+/* Line 1455 of yacc.c  */
 #line 2266 "cimXmlOps.y"
     {
       memset(&(yyval.xtokReferenceNamesParms), 0, sizeof((yyval.xtokReferenceNamesParms)));
@@ -4363,6 +4772,8 @@ yyreduce:
     break;
 
   case 201:
+
+/* Line 1455 of yacc.c  */
 #line 2270 "cimXmlOps.y"
     {
        (yyval.xtokReferenceNamesParms).role = (yyvsp[(2) - (3)].xtokValue).value;
@@ -4372,6 +4783,8 @@ yyreduce:
     break;
 
   case 202:
+
+/* Line 1455 of yacc.c  */
 #line 2276 "cimXmlOps.y"
     {
       memset(&(yyval.xtokReferenceNamesParms), 0, sizeof((yyval.xtokReferenceNamesParms)));
@@ -4379,6 +4792,8 @@ yyreduce:
     break;
 
   case 203:
+
+/* Line 1455 of yacc.c  */
 #line 2288 "cimXmlOps.y"
     {
         (yyval.xtokNamedInstance).path=(yyvsp[(2) - (4)].xtokInstanceName);
@@ -4387,6 +4802,8 @@ yyreduce:
     break;
 
   case 204:
+
+/* Line 1455 of yacc.c  */
 #line 2301 "cimXmlOps.y"
     {
        if (((ParserControl*)parm)->Qs) 
@@ -4402,11 +4819,15 @@ yyreduce:
     break;
 
   case 205:
+
+/* Line 1455 of yacc.c  */
 #line 2315 "cimXmlOps.y"
     {;}
     break;
 
   case 206:
+
+/* Line 1455 of yacc.c  */
 #line 2317 "cimXmlOps.y"
     {
        ((ParserControl*)parm)->Qs++;
@@ -4415,6 +4836,8 @@ yyreduce:
     break;
 
   case 207:
+
+/* Line 1455 of yacc.c  */
 #line 2321 "cimXmlOps.y"
     {
        ((ParserControl*)parm)->Ps++;
@@ -4423,6 +4846,8 @@ yyreduce:
     break;
 
   case 208:
+
+/* Line 1455 of yacc.c  */
 #line 2325 "cimXmlOps.y"
     {
         ((ParserControl*)parm)->Ms++;
@@ -4431,6 +4856,8 @@ yyreduce:
     break;
 
   case 209:
+
+/* Line 1455 of yacc.c  */
 #line 2333 "cimXmlOps.y"
     {
        if (((ParserControl*)parm)->MQs) 
@@ -4446,11 +4873,15 @@ yyreduce:
     break;
 
   case 210:
+
+/* Line 1455 of yacc.c  */
 #line 2347 "cimXmlOps.y"
     {;}
     break;
 
   case 211:
+
+/* Line 1455 of yacc.c  */
 #line 2349 "cimXmlOps.y"
     {
        if (((ParserControl*)parm)->MQs==0) 
@@ -4461,6 +4892,8 @@ yyreduce:
     break;
 
   case 212:
+
+/* Line 1455 of yacc.c  */
 #line 2356 "cimXmlOps.y"
     {
        if (((ParserControl*)parm)->MPs==0) 
@@ -4475,11 +4908,15 @@ yyreduce:
     break;
 
   case 213:
+
+/* Line 1455 of yacc.c  */
 #line 2369 "cimXmlOps.y"
     {;}
     break;
 
   case 214:
+
+/* Line 1455 of yacc.c  */
 #line 2371 "cimXmlOps.y"
     {
        if (((ParserControl*)parm)->MPQs==0) 
@@ -4490,6 +4927,8 @@ yyreduce:
     break;
 
   case 215:
+
+/* Line 1455 of yacc.c  */
 #line 2386 "cimXmlOps.y"
     {
        if((yyvsp[(2) - (3)].xtokInstanceData).qualifiers.first)
@@ -4503,6 +4942,8 @@ yyreduce:
     break;
 
   case 216:
+
+/* Line 1455 of yacc.c  */
 #line 2399 "cimXmlOps.y"
     {
        (yyval.xtokInstanceData).properties.last=0;
@@ -4513,6 +4954,8 @@ yyreduce:
     break;
 
   case 217:
+
+/* Line 1455 of yacc.c  */
 #line 2406 "cimXmlOps.y"
     {
        addQualifier(&((yyval.xtokInstanceData).qualifiers),&(yyvsp[(2) - (2)].xtokQualifier));
@@ -4520,6 +4963,8 @@ yyreduce:
     break;
 
   case 218:
+
+/* Line 1455 of yacc.c  */
 #line 2410 "cimXmlOps.y"
     {
        addProperty(&((yyval.xtokInstanceData).properties),&(yyvsp[(2) - (2)].xtokProperty));
@@ -4527,11 +4972,15 @@ yyreduce:
     break;
 
   case 219:
+
+/* Line 1455 of yacc.c  */
 #line 2420 "cimXmlOps.y"
     {;}
     break;
 
   case 220:
+
+/* Line 1455 of yacc.c  */
 #line 2422 "cimXmlOps.y"
     {
     	(yyval.xtokQualifierDeclaration).scope = (yyvsp[(2) - (4)].xtokScope);
@@ -4540,6 +4989,8 @@ yyreduce:
     break;
 
   case 221:
+
+/* Line 1455 of yacc.c  */
 #line 2430 "cimXmlOps.y"
     {
     	(yyval.xtokQualifierDeclarationData).value.value = NULL;
@@ -4547,6 +4998,8 @@ yyreduce:
     break;
 
   case 222:
+
+/* Line 1455 of yacc.c  */
 #line 2434 "cimXmlOps.y"
     {
     	(yyval.xtokQualifierDeclarationData).value = (yyvsp[(1) - (1)].xtokValue);
@@ -4555,6 +5008,8 @@ yyreduce:
     break;
 
   case 223:
+
+/* Line 1455 of yacc.c  */
 #line 2439 "cimXmlOps.y"
     {
     	(yyval.xtokQualifierDeclarationData).valueArray=(yyvsp[(1) - (1)].xtokValueArray);
@@ -4563,17 +5018,23 @@ yyreduce:
     break;
 
   case 224:
+
+/* Line 1455 of yacc.c  */
 #line 2449 "cimXmlOps.y"
     {;}
     break;
 
   case 225:
+
+/* Line 1455 of yacc.c  */
 #line 2451 "cimXmlOps.y"
     {
 	}
     break;
 
   case 226:
+
+/* Line 1455 of yacc.c  */
 #line 2461 "cimXmlOps.y"
     {
        (yyvsp[(3) - (4)].xtokPropertyData).qualifiers=(yyvsp[(2) - (4)].xtokQualifiers);
@@ -4589,6 +5050,8 @@ yyreduce:
     break;
 
   case 227:
+
+/* Line 1455 of yacc.c  */
 #line 2473 "cimXmlOps.y"
     {
        (yyvsp[(3) - (4)].xtokPropertyData).qualifiers=(yyvsp[(2) - (4)].xtokQualifiers);
@@ -4597,6 +5060,8 @@ yyreduce:
     break;
 
   case 228:
+
+/* Line 1455 of yacc.c  */
 #line 2478 "cimXmlOps.y"
     {
        (yyvsp[(3) - (4)].xtokPropertyData).qualifiers=(yyvsp[(2) - (4)].xtokQualifiers);
@@ -4612,6 +5077,8 @@ yyreduce:
     break;
 
   case 229:
+
+/* Line 1455 of yacc.c  */
 #line 2493 "cimXmlOps.y"
     {
       (yyval.xtokQualifiers).first = (yyval.xtokQualifiers).last = NULL;
@@ -4619,6 +5086,8 @@ yyreduce:
     break;
 
   case 230:
+
+/* Line 1455 of yacc.c  */
 #line 2497 "cimXmlOps.y"
     {
        addQualifier(&(yyvsp[(1) - (2)].xtokQualifiers),&(yyvsp[(2) - (2)].xtokQualifier));
@@ -4627,6 +5096,8 @@ yyreduce:
     break;
 
   case 231:
+
+/* Line 1455 of yacc.c  */
 #line 2505 "cimXmlOps.y"
     {
        (yyval.xtokPropertyData).val.value = NULL;
@@ -4636,6 +5107,8 @@ yyreduce:
     break;
 
   case 232:
+
+/* Line 1455 of yacc.c  */
 #line 2511 "cimXmlOps.y"
     {
        (yyval.xtokPropertyData).val=(yyvsp[(1) - (1)].xtokValue);
@@ -4643,6 +5116,8 @@ yyreduce:
     break;
 
   case 233:
+
+/* Line 1455 of yacc.c  */
 #line 2515 "cimXmlOps.y"
     {
        (yyval.xtokPropertyData).ref=(yyvsp[(1) - (1)].xtokValueReference);
@@ -4650,6 +5125,8 @@ yyreduce:
     break;
 
   case 234:
+
+/* Line 1455 of yacc.c  */
 #line 2519 "cimXmlOps.y"
     {
        (yyval.xtokPropertyData).list=(yyvsp[(1) - (1)].xtokValueArray);
@@ -4657,6 +5134,8 @@ yyreduce:
     break;
 
   case 235:
+
+/* Line 1455 of yacc.c  */
 #line 2532 "cimXmlOps.y"
     {
        (yyval.xtokQualifier).value=(yyvsp[(2) - (3)].xtokValue);
@@ -4664,6 +5143,8 @@ yyreduce:
     break;
 
   case 236:
+
+/* Line 1455 of yacc.c  */
 #line 2536 "cimXmlOps.y"
     {
        (yyval.xtokQualifier).valueArray=(yyvsp[(2) - (3)].xtokValueArray);
@@ -4672,6 +5153,8 @@ yyreduce:
     break;
 
   case 237:
+
+/* Line 1455 of yacc.c  */
 #line 2550 "cimXmlOps.y"
     {
        (yyval.xtokLocalNameSpacePath)=(yyvsp[(2) - (3)].xtokNameSpace).cns;
@@ -4679,6 +5162,8 @@ yyreduce:
     break;
 
   case 238:
+
+/* Line 1455 of yacc.c  */
 #line 2557 "cimXmlOps.y"
     {
        (yyval.xtokNameSpace).cns=strdup((yyvsp[(1) - (2)].xtokNameSpace).ns);
@@ -4686,6 +5171,8 @@ yyreduce:
     break;
 
   case 239:
+
+/* Line 1455 of yacc.c  */
 #line 2561 "cimXmlOps.y"
     {
        int l=strlen((yyvsp[(1) - (3)].xtokNameSpace).cns)+strlen((yyvsp[(2) - (3)].xtokNameSpace).ns)+2;
@@ -4698,6 +5185,8 @@ yyreduce:
     break;
 
   case 240:
+
+/* Line 1455 of yacc.c  */
 #line 2574 "cimXmlOps.y"
     {
        (yyval.xtokNameSpacePath).host=(yyvsp[(2) - (4)].xtokHost);
@@ -4706,12 +5195,16 @@ yyreduce:
     break;
 
   case 241:
+
+/* Line 1455 of yacc.c  */
 #line 2582 "cimXmlOps.y"
     {
     }
     break;
 
   case 242:
+
+/* Line 1455 of yacc.c  */
 #line 2588 "cimXmlOps.y"
     {
        (yyval.xtokInstancePath).path=(yyvsp[(2) - (4)].xtokNameSpacePath);
@@ -4721,6 +5214,8 @@ yyreduce:
     break;
 
   case 243:
+
+/* Line 1455 of yacc.c  */
 #line 2607 "cimXmlOps.y"
     {
        (yyval.xtokLocalInstancePath).path=(yyvsp[(2) - (4)].xtokLocalNameSpacePath);
@@ -4730,6 +5225,8 @@ yyreduce:
     break;
 
   case 244:
+
+/* Line 1455 of yacc.c  */
 #line 2616 "cimXmlOps.y"
     {
        (yyval.xtokLocalClassPath).path=(yyvsp[(2) - (4)].xtokLocalNameSpacePath);
@@ -4739,6 +5236,8 @@ yyreduce:
     break;
 
   case 245:
+
+/* Line 1455 of yacc.c  */
 #line 2629 "cimXmlOps.y"
     {
        (yyval.xtokValue).instance = malloc(sizeof(XtokInstance));
@@ -4748,6 +5247,8 @@ yyreduce:
     break;
 
   case 246:
+
+/* Line 1455 of yacc.c  */
 #line 2635 "cimXmlOps.y"
     {
        (yyval.xtokValue).instance = malloc(sizeof(XtokInstance));
@@ -4757,6 +5258,8 @@ yyreduce:
     break;
 
   case 247:
+
+/* Line 1455 of yacc.c  */
 #line 2641 "cimXmlOps.y"
     {
        (yyval.xtokValue).type=typeValue_Class;
@@ -4764,6 +5267,8 @@ yyreduce:
     break;
 
   case 248:
+
+/* Line 1455 of yacc.c  */
 #line 2645 "cimXmlOps.y"
     {
        (yyval.xtokValue).value=(yyvsp[(1) - (2)].xtokValue).value;
@@ -4772,6 +5277,8 @@ yyreduce:
     break;
 
   case 249:
+
+/* Line 1455 of yacc.c  */
 #line 2653 "cimXmlOps.y"
     {
 	  (yyval.xtokValueArray).values=(XtokValue*)malloc(sizeof(XtokValue));
@@ -4780,6 +5287,8 @@ yyreduce:
     break;
 
   case 250:
+
+/* Line 1455 of yacc.c  */
 #line 2658 "cimXmlOps.y"
     {
 	  (yyval.xtokValueArray) = (yyvsp[(2) - (3)].xtokValueArray);
@@ -4789,6 +5298,8 @@ yyreduce:
     break;
 
   case 251:
+
+/* Line 1455 of yacc.c  */
 #line 2668 "cimXmlOps.y"
     {
           (yyval.xtokValueArray).next=1;
@@ -4799,6 +5310,8 @@ yyreduce:
     break;
 
   case 252:
+
+/* Line 1455 of yacc.c  */
 #line 2675 "cimXmlOps.y"
     {
           if ((yyval.xtokValueArray).next == (yyval.xtokValueArray).max) { /* max was hit; let's bump it up 50% */
@@ -4811,6 +5324,8 @@ yyreduce:
     break;
 
   case 253:
+
+/* Line 1455 of yacc.c  */
 #line 2687 "cimXmlOps.y"
     {
        (yyval.xtokValueReference).instancePath=(yyvsp[(2) - (3)].xtokInstancePath);
@@ -4819,6 +5334,8 @@ yyreduce:
     break;
 
   case 254:
+
+/* Line 1455 of yacc.c  */
 #line 2692 "cimXmlOps.y"
     {
        (yyval.xtokValueReference).localInstancePath=(yyvsp[(2) - (3)].xtokLocalInstancePath);
@@ -4827,6 +5344,8 @@ yyreduce:
     break;
 
   case 255:
+
+/* Line 1455 of yacc.c  */
 #line 2697 "cimXmlOps.y"
     {
        (yyval.xtokValueReference).instanceName=(yyvsp[(2) - (3)].xtokInstanceName);
@@ -4835,6 +5354,8 @@ yyreduce:
     break;
 
   case 256:
+
+/* Line 1455 of yacc.c  */
 #line 2705 "cimXmlOps.y"
     {
        (yyval.xtokValueRefArray)=(yyvsp[(2) - (3)].xtokValueRefArray);
@@ -4842,6 +5363,8 @@ yyreduce:
     break;
 
   case 257:
+
+/* Line 1455 of yacc.c  */
 #line 2712 "cimXmlOps.y"
     {
        (yyval.xtokValueRefArray).next=1;
@@ -4852,6 +5375,8 @@ yyreduce:
     break;
 
   case 258:
+
+/* Line 1455 of yacc.c  */
 #line 2719 "cimXmlOps.y"
     {
        if ((yyval.xtokValueRefArray).next == (yyval.xtokValueRefArray).max) { /* max was hit; let's bump it up 50% */
@@ -4864,6 +5389,8 @@ yyreduce:
     break;
 
   case 259:
+
+/* Line 1455 of yacc.c  */
 #line 2731 "cimXmlOps.y"
     {
     if (strcasecmp((yyvsp[(1) - (2)].xtokValue).value,"true")==0) (yyval.boolValue)=1;
@@ -4872,12 +5399,16 @@ yyreduce:
     break;
 
   case 260:
+
+/* Line 1455 of yacc.c  */
 #line 2739 "cimXmlOps.y"
     {
     }
     break;
 
   case 261:
+
+/* Line 1455 of yacc.c  */
 #line 2751 "cimXmlOps.y"
     {
        (yyval.xtokInstanceName).className=(yyvsp[(1) - (2)].xtokInstanceName).className;
@@ -4887,6 +5418,8 @@ yyreduce:
     break;
 
   case 262:
+
+/* Line 1455 of yacc.c  */
 #line 2757 "cimXmlOps.y"
     {
        (yyval.xtokInstanceName).className=(yyvsp[(1) - (3)].xtokInstanceName).className;
@@ -4895,6 +5428,8 @@ yyreduce:
     break;
 
   case 263:
+
+/* Line 1455 of yacc.c  */
 #line 2765 "cimXmlOps.y"
     {
        (yyval.xtokKeyBindings).next=1;
@@ -4908,6 +5443,8 @@ yyreduce:
     break;
 
   case 264:
+
+/* Line 1455 of yacc.c  */
 #line 2775 "cimXmlOps.y"
     {
        if ((yyval.xtokKeyBindings).next == (yyval.xtokKeyBindings).max) { /* max was hit; let's bump it up 50% */
@@ -4923,6 +5460,8 @@ yyreduce:
     break;
 
   case 265:
+
+/* Line 1455 of yacc.c  */
 #line 2790 "cimXmlOps.y"
     {
        (yyval.xtokKeyBinding).name=(yyvsp[(1) - (4)].xtokKeyBinding).name;
@@ -4932,6 +5471,8 @@ yyreduce:
     break;
 
   case 266:
+
+/* Line 1455 of yacc.c  */
 #line 2796 "cimXmlOps.y"
     {
        (yyval.xtokKeyBinding).name=(yyvsp[(1) - (3)].xtokKeyBinding).name;
@@ -4942,8 +5483,9 @@ yyreduce:
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 4947 "cimXmlOps.c"
+
+/* Line 1455 of yacc.c  */
+#line 5489 "cimXmlOps.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -4953,7 +5495,6 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -5019,7 +5560,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
+      /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -5036,7 +5577,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -5093,9 +5634,6 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   *++yyvsp = yylval;
 
 
@@ -5120,7 +5658,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
+#if !defined(yyoverflow) || YYERROR_VERBOSE
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -5131,7 +5669,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
+  if (yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -5157,6 +5695,8 @@ yyreturn:
 }
 
 
+
+/* Line 1675 of yacc.c  */
 #line 2804 "cimXmlOps.y"
 
 

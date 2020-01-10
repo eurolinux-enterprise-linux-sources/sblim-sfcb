@@ -1,6 +1,6 @@
 
 /*
- * $Id: providerDrv.c,v 1.85 2010/04/14 20:06:24 buccella Exp $
+ * $Id: providerDrv.c,v 1.95 2011/02/23 23:02:42 buccella Exp $
  *
  * © Copyright IBM Corp. 2005, 2007
  *
@@ -96,6 +96,26 @@ char * opsName[];
 
 #endif
 
+#ifndef PROVIDERLOAD_DLFLAG
+#define PROVIDERLOAD_DLFLAG (RTLD_NOW | RTLD_GLOBAL)
+#endif
+
+#ifndef HAVE_OPTIMIZED_ENUMERATION
+     /* not a special provider, perform class name substitution if call is for a
+        parent class of the class the provider is registered for */
+#define REPLACE_CN(info,path)  \
+   if (info->className && info->className[0] != '$') {  \
+     char * classname = CMGetCharPtr(CMGetClassName(path,NULL));  \
+     char * namespace = CMGetCharPtr(CMGetNameSpace(path,NULL));  \
+     if (classname && namespace && strcasecmp(info->className,classname)) {  \
+       CMPIObjectPath * provPath = CMNewObjectPath(Broker,namespace,info->className,NULL);  \
+       if (provPath && CMClassPathIsA(Broker,provPath,classname,NULL)) {   \
+	 _SFCB_TRACE(1, ("--- Replacing class name %s",info->className));  \
+	 path = provPath;  \
+       }  }  }
+#endif
+
+
 extern CMPIBroker *Broker;
 
 extern unsigned long exFlags;
@@ -135,7 +155,6 @@ static int provProcMax=0;
 static int idleThreadStartHandled=0;
 
 ProviderInfo *activProvs = NULL;
-int indicationEnabled=0;
 
 unsigned long provSampleInterval=10;
 unsigned long provTimeoutInterval=25;
@@ -262,24 +281,88 @@ int stopNextProc()
    return 0;
 }
 
+static int getActivProvCount() {
+  ProviderInfo* tmp;
+  int count = 0;
+  for (tmp = activProvs; tmp; tmp = tmp->next)
+    count++;
+  return count;
+}
+
+typedef struct _provLibAndTypes {
+  void* lib;
+#define INST  1
+#define ASSOC 2
+#define METH  4
+#define IND   8
+  int types; /* bitmask for each type */
+} ProvLibAndTypes;
+
+/* hasBeenCleaned returns < 0 if the cleanup function for type for a provider 
+   (represented by plib, the handle from it's dlopen()) has been called
+
+   index is an out param; it's the index for plib in list (or the next available
+   position if it's not yet in list)
+
+   Details:
+   we need to take special care when cleaning up, since we only want to call 
+   the cleanup function (for each MI) only once, even if there are multiple 
+   classes handled by the same provider.  Also, we can't just toggle a 
+   "cleanedUp" flag for the whole proc, since we may be grouping. So we need
+   to track cleanup calls for each type for each provider in the proc.
+ */
+
+static int hasBeenCleaned(ProvLibAndTypes* list, int type, void* plib, int* index) {
+  int rc = 0;
+  int i;
+  for (i=0; list[i].lib > 0; i++) {
+    if (list[i].lib == plib) {
+      rc = list[i].types & type;
+      break;
+    }
+  }
+  *index = i;
+  return rc;
+}
+
 static void stopProc(void *p)
 {
-   ProviderInfo *pInfo, *temp;
+   ProviderInfo *pInfo;
    CMPIContext *ctx = NULL;
 
+   int apc = getActivProvCount();
+   ProvLibAndTypes cleanedProvs[apc]; 
+   int i;
+   for (i=0; i < apc; i++) { cleanedProvs[i].lib = 0; cleanedProvs[i].types = 0; }
+   int cpli = 0; /* the index into cleanedProvs for a given prov lib */
+
    ctx = native_new_CMPIContext(MEM_NOT_TRACKED,NULL);
-//   for (pInfo=curProvProc->firstProv; pInfo; pInfo=pInfo->next) {
-   for (pInfo=activProvs; pInfo; pInfo=pInfo->next) {
-   for (temp=activProvs;temp;temp=temp->next) {
-      if((strcmp(temp->providerName,pInfo->providerName)==0) && (strcmp(temp->className,pInfo->className)!=0)) break;
-      if (pInfo->classMI) pInfo->classMI->ft->cleanup(pInfo->classMI, ctx);
-      if (pInfo->instanceMI) pInfo->instanceMI->ft->cleanup(pInfo->instanceMI, ctx, 1);
-      if (pInfo->associationMI) pInfo->associationMI->ft->cleanup(pInfo->associationMI, ctx, 1);
-      if (pInfo->methodMI) pInfo->methodMI->ft->cleanup(pInfo->methodMI, ctx, 1);
-      if (pInfo->indicationMI) pInfo->indicationMI->ft->cleanup(pInfo->indicationMI, ctx, 1);
-      //dlclose(pInfo->library);
-    }
+   for (pInfo=activProvs; pInfo; pInfo=pInfo->next,cpli++) {
+
+     if (pInfo->classMI) pInfo->classMI->ft->cleanup(pInfo->classMI, ctx);
+     if (pInfo->instanceMI && (hasBeenCleaned(cleanedProvs, INST, pInfo->library, &cpli) == 0)) {
+       pInfo->instanceMI->ft->cleanup(pInfo->instanceMI, ctx, 1);
+       cleanedProvs[cpli].lib = pInfo->library;
+       cleanedProvs[cpli].types |= INST;
+     }
+     if (pInfo->associationMI && (hasBeenCleaned(cleanedProvs, ASSOC, pInfo->library, &cpli) == 0)) {
+       pInfo->associationMI->ft->cleanup(pInfo->associationMI, ctx, 1);
+       cleanedProvs[cpli].lib = pInfo->library;
+       cleanedProvs[cpli].types |= ASSOC;
+     }
+     if (pInfo->methodMI && (hasBeenCleaned(cleanedProvs, METH, pInfo->library, &cpli) == 0)) {
+       pInfo->methodMI->ft->cleanup(pInfo->methodMI, ctx, 1);
+       cleanedProvs[cpli].lib = pInfo->library;
+       cleanedProvs[cpli].types |= METH;
+     }
+     if (pInfo->indicationMI && (hasBeenCleaned(cleanedProvs, IND, pInfo->library, &cpli) == 0)) {
+       pInfo->indicationMI->ft->disableIndications(pInfo->indicationMI, ctx);
+       pInfo->indicationMI->ft->cleanup(pInfo->indicationMI, ctx, 1);
+       cleanedProvs[cpli].lib = pInfo->library;
+       cleanedProvs[cpli].types |= IND;
+     }
    }
+    
    mlogf(M_INFO,M_SHOW,"---  stopped %s %d\n",processName,getpid());
    ctx->ft->release(ctx);
    
@@ -355,7 +438,7 @@ void* providerIdleThread()
    struct timespec idleTime;
    time_t next;
    int rc,val,doNotExit,noBreak=1;
-   ProviderInfo *pInfo, *temp;
+   ProviderInfo *pInfo;
    ProviderProcess *proc;
    CMPIContext *ctx = NULL;
    CMPIStatus crc;
@@ -387,32 +470,61 @@ void* providerIdleThread()
                   if ((now-proc->lastActivity)>provTimeoutInterval) {
                      ctx = native_new_CMPIContext(MEM_TRACKED,NULL);
                      noBreak=0;
-                     for (crc.rc=0,pInfo = activProvs; pInfo; pInfo = pInfo->next) {
-    		     for(temp=activProvs;temp;temp=temp->next) {
-			if((strcmp(temp->providerName,pInfo->providerName)==0) && (strcmp(temp->className,pInfo->className)!=0)) break;
-                        if (pInfo->library==NULL) continue;
-                        if (pInfo->indicationMI!=NULL) continue;
-                        if (crc.rc==0 && pInfo->instanceMI) 
-                           crc = pInfo->instanceMI->ft->cleanup(pInfo->instanceMI, ctx,0);
-                        if (crc.rc==0 && pInfo->associationMI) 
-                           crc = pInfo->associationMI->ft->cleanup(pInfo->associationMI, ctx,0);
-                        if (crc.rc==0 && pInfo->methodMI) 
-                           crc = pInfo->methodMI->ft->cleanup(pInfo->methodMI, ctx,0);
+
+		     int apc = getActivProvCount();
+		     ProvLibAndTypes cleanedProvs[apc]; 
+		     int i;
+		     for (i=0; i < apc; i++) { cleanedProvs[i].lib = 0; cleanedProvs[i].types = 0; }
+		     int cpli = 0; /* the index into cleanedProvs for a given prov lib */
+
+                     for (crc.rc=0,pInfo = activProvs; pInfo; pInfo = pInfo->next,cpli++) {
+		       if (pInfo->library==NULL) continue;
+		       
+		       if (crc.rc==0 && pInfo->instanceMI && (hasBeenCleaned(cleanedProvs, INST, pInfo->library, &cpli) == 0)) {
+			 crc = pInfo->instanceMI->ft->cleanup(pInfo->instanceMI, ctx,0);
+			 if (crc.rc==CMPI_RC_OK) {
+			   cleanedProvs[cpli].lib = pInfo->library;
+			   cleanedProvs[cpli].types |= INST;
+			 }
+		       }
+		       if (crc.rc==0 && pInfo->associationMI  && (hasBeenCleaned(cleanedProvs, ASSOC, pInfo->library, &cpli) == 0)) {
+			 crc = pInfo->associationMI->ft->cleanup(pInfo->associationMI, ctx,0);
+			 if (crc.rc==CMPI_RC_OK) {
+			   cleanedProvs[cpli].lib = pInfo->library;
+			   cleanedProvs[cpli].types |= ASSOC;
+			 }
+		       }
+		       if (crc.rc==0 && pInfo->methodMI && (hasBeenCleaned(cleanedProvs, METH, pInfo->library, &cpli) == 0)) {
+			 crc = pInfo->methodMI->ft->cleanup(pInfo->methodMI, ctx,0);
+			 if (crc.rc==CMPI_RC_OK) {
+			   cleanedProvs[cpli].lib = pInfo->library;
+			   cleanedProvs[cpli].types |= METH;
+			 }
+		       }
+		       if (crc.rc==0 && pInfo->indicationMI && (hasBeenCleaned(cleanedProvs, IND, pInfo->library, &cpli) == 0)) {
+			 crc = pInfo->indicationMI->ft->cleanup(pInfo->indicationMI, ctx,0);
+			 if (crc.rc==CMPI_RC_OK) {
+			   cleanedProvs[cpli].lib = pInfo->library;
+			   cleanedProvs[cpli].types |= IND;
+			 }
+		       }
+		       
                         _SFCB_TRACE(1, ("--- Cleanup rc: %d %s-%d",crc.rc,processName,currentProc));
+
                         if (crc.rc==CMPI_RC_NEVER_UNLOAD) doNotExit=1;
                         if (crc.rc==CMPI_RC_DO_NOT_UNLOAD) doNotExit=noBreak=1;
-                        if (crc.rc==0) {
+                        if (crc.rc==CMPI_RC_OK) {
                            _SFCB_TRACE(1, ("--- Unloading provider %s-%d",pInfo->providerName,currentProc));
                            dlclose(pInfo->library);
                            pInfo->library=NULL;
                            pInfo->instanceMI=NULL;
                            pInfo->associationMI=NULL;
                            pInfo->methodMI=NULL;
+                           pInfo->indicationMI=NULL;
                            pInfo->initialized=0;
 			   pthread_mutex_destroy(&pInfo->initMtx);
                         }   
                         else doNotExit=1;
-                       }
 		     }  
                      if (doNotExit==0) {
                         dumpTiming(currentProc);
@@ -1644,19 +1756,7 @@ static BinResponseHdr *enumInstances(BinRequestHdr * hdr, ProviderInfo * info,
    char **props=NULL;
 
 #ifndef HAVE_OPTIMIZED_ENUMERATION
-   if (info->className && info->className[0] != '$') {
-     /* not a special provider, perform class name substitution if call is for a
-        parent class of the class the provider is registered for */
-     char * classname = CMGetCharPtr(CMGetClassName(path,NULL));
-     char * namespace = CMGetCharPtr(CMGetNameSpace(path,NULL));
-     if (classname && namespace && strcasecmp(info->className,classname)) {
-       CMPIObjectPath * provPath = CMNewObjectPath(Broker,namespace,info->className,NULL);
-       if (provPath && CMClassPathIsA(Broker,provPath,classname,NULL)) {
-	 _SFCB_TRACE(1, ("--- Replacing class name %s",info->className));
-	 path = provPath;
-       }
-     }
-   }
+   REPLACE_CN(info,path);
 #endif
 
    if (req->hdr.flags & FL_localOnly) flgs|=CMPI_FLAG_LocalOnly;
@@ -1699,19 +1799,7 @@ static BinResponseHdr *enumInstanceNames(BinRequestHdr * hdr,
    CMPIFlags flgs=0;
 
 #ifndef HAVE_OPTIMIZED_ENUMERATION
-   if (info->className && info->className[0] != '$') {
-     /* not a special provider, perform class name substitution if call is for a
-        parent class of the class the provider is registered for */
-     char * classname = CMGetCharPtr(CMGetClassName(path,NULL));
-     char * namespace = CMGetCharPtr(CMGetNameSpace(path,NULL));
-     if (classname && namespace && strcasecmp(info->className,classname)) {
-       CMPIObjectPath * provPath = CMNewObjectPath(Broker,namespace,info->className,NULL);
-       if (provPath && CMClassPathIsA(Broker,provPath,classname,NULL)) {
-	 _SFCB_TRACE(1, ("--- Replacing class name %s",info->className));
-	 path = provPath;
-       }
-     }
-   }
+   REPLACE_CN(info,path);
 #endif
 
    ctx->ft->addEntry(ctx,CMPIInvocationFlags,(CMPIValue*)&flgs,CMPI_uint32);
@@ -1826,6 +1914,10 @@ static BinResponseHdr *execQuery(BinRequestHdr * hdr, ProviderInfo * info, int r
          resp = errorResp(&rci);
          _SFCB_RETURN(resp);
       }
+
+#ifndef HAVE_OPTIMIZED_ENUMERATION
+      REPLACE_CN(info,path);
+#endif
 
       qs->propSrc.getValue=queryGetValue;
       qs->propSrc.sns=qs->sns;
@@ -2144,13 +2236,6 @@ static BinResponseHdr *activateFilter(BinRequestHdr *hdr, ProviderInfo* info,
       TIMING_STOP(hdr,info)
       _SFCB_TRACE(1, ("--- Back from provider rc: %d", rci.rc));
 
-      /*if (indicationEnabled==0 && rci.rc==CMPI_RC_OK) {
-      indicationEnabled=1;
-	TIMING_START(hdr,info)
-      info->indicationMI->ft->enableIndications(info->indicationMI,ctx);
-	TIMING_STOP(hdr,info)
-      }*/
-
       if (rci.rc==CMPI_RC_OK) {
          resp = (BinResponseHdr *) calloc(1,sizeof(BinResponseHdr));
          resp->rc=1;
@@ -2200,7 +2285,7 @@ static BinResponseHdr *deactivateFilter(BinRequestHdr *hdr, ProviderInfo* info,
          *sef=se->next;
          if (activFilters==NULL) {
             _SFCB_TRACE(1, ("--- Calling disableIndications %s",info->providerName));
-            indicationEnabled=0;
+            info->indicationEnabled=0;
 	   TIMING_START(hdr,info)
             info->indicationMI->ft->disableIndications(info->indicationMI,ctx);
 	   TIMING_STOP(hdr,info)
@@ -2257,8 +2342,8 @@ static BinResponseHdr *enableIndications(BinRequestHdr *hdr, ProviderInfo* info,
 		_SFCB_RETURN(resp);  
 	}
 	
-	if (indicationEnabled==0 && rci.rc==CMPI_RC_OK) {
-		indicationEnabled=1;
+	if (info->indicationEnabled==0 && rci.rc==CMPI_RC_OK) {
+		info->indicationEnabled=1;
 		TIMING_START(hdr,info)
 		info->indicationMI->ft->enableIndications(info->indicationMI,ctx);
 		TIMING_STOP(hdr,info)
@@ -2300,8 +2385,8 @@ static BinResponseHdr *disableIndications(BinRequestHdr *hdr, ProviderInfo* info
 		_SFCB_RETURN(resp);  
 	}
 	
-	if (indicationEnabled==1 && rci.rc==CMPI_RC_OK) {
-		indicationEnabled=0;
+	if (info->indicationEnabled==1 && rci.rc==CMPI_RC_OK) {
+		info->indicationEnabled=0;
 		TIMING_START(hdr,info)
 		info->indicationMI->ft->disableIndications(info->indicationMI,ctx);
 		TIMING_STOP(hdr,info)
@@ -2360,7 +2445,6 @@ int initProvider(ProviderInfo *info, unsigned int sessionId, char** errorStr)
 
    pthread_mutex_lock(&info->initMtx);
    if (info->initialized==0) {  
-     info -> initialized = 1;
    
      ctx->ft->addEntry(ctx,CMPIInvocationFlags,(CMPIValue*)&flgs,CMPI_uint32);
      ctx->ft->addEntry(ctx,CMPIPrincipal,(CMPIValue*)"$$",CMPI_chars);
@@ -2431,7 +2515,6 @@ int initProvider(ProviderInfo *info, unsigned int sessionId, char** errorStr)
      
      if (rc) {
        rc = -2;
-       info -> initialized = 0;
        if (errstr != NULL) {
           *errorStr = sfcb_snprintf("Error initializing provider %s from %s for class %s.  %s", 
                            info->providerName, info->location, 
@@ -2442,6 +2525,7 @@ int initProvider(ProviderInfo *info, unsigned int sessionId, char** errorStr)
                            info->providerName, info->location, info->className);
        }
      } else {
+       info -> initialized = 1;
        *errorStr = NULL;
      }
    }
@@ -2477,9 +2561,9 @@ static int doLoadProvider(ProviderInfo *info, char *dlName, int dlName_length)
    while (dir) {
      libraryName(dir, (char *) info->location, fullname, fullname_max_length);
      if (stat(fullname,&stbuf) == 0) {
-       info->library = dlopen(fullname, RTLD_NOW | RTLD_GLOBAL);
+       info->library = dlopen(fullname, PROVIDERLOAD_DLFLAG);
        if (info->library == NULL) {
-	 mlogf(M_ERROR,M_SHOW,"*** dlopen error: %s\n",dlerror());
+         mlogf(M_ERROR,M_SHOW,"*** dlopen: %s error: %s\n", fullname, dlerror());
        } else {
 	 _SFCB_TRACE(1, ("--- Loaded provider library %s for %s-%d",
 			 fullname,
@@ -2604,8 +2688,8 @@ static ProvHandler pHandlers[] = {
 #else
    {NULL},                      //OPS_ActivateFilter     28
    {NULL},                      //OPS_DeactivateFilter   29
-   {NULL},                      //OPS_EnableIndications  30
-   {NULL}                       //OPS_DisableIndications 31
+   {NULL},                      //OPS_DisableIndications  30
+   {NULL}                       //OPS_EnableIndications 31
 #endif   
 };
 
@@ -2640,8 +2724,8 @@ char *opsName[] = {
    "IndicationLookup",
    "ActivateFilter",
    "DeactivateFilter",
-   "EnableIndications",
    "DisableIndications",
+   "EnableIndications",
 };
 
 static void *processProviderInvocationRequestsThread(void *prms)

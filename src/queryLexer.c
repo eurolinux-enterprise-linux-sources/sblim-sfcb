@@ -568,7 +568,8 @@ extern char * sfcQueryStrcpy(char *txt, int len);
 #include <stdio.h>
 #include <string.h>
 
-#line 572 "<stdout>"
+#define YY_NO_INPUT 1
+#line 573 "<stdout>"
 
 #define INITIAL 0
 
@@ -748,10 +749,10 @@ YY_DECL
 	register char *sfcQuery_cp, *sfcQuery_bp;
 	register int sfcQuery_act;
     
-#line 75 "queryLexer.l"
+#line 76 "queryLexer.l"
 
 
-#line 755 "<stdout>"
+#line 756 "<stdout>"
 
 	if ( !(sfcQuery_init) )
 		{
@@ -832,7 +833,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 77 "queryLexer.l"
+#line 78 "queryLexer.l"
 {
 
     return TOK_SELECT;
@@ -840,7 +841,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 82 "queryLexer.l"
+#line 83 "queryLexer.l"
 {
 
     return TOK_FROM;
@@ -848,7 +849,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 87 "queryLexer.l"
+#line 88 "queryLexer.l"
 {
 
     return TOK_WHERE;
@@ -856,7 +857,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 92 "queryLexer.l"
+#line 93 "queryLexer.l"
 {
 
     return TOK_TRUE;
@@ -864,7 +865,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 97 "queryLexer.l"
+#line 98 "queryLexer.l"
 {
 
     return TOK_FALSE;
@@ -872,7 +873,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 102 "queryLexer.l"
+#line 103 "queryLexer.l"
 {
 
     return TOK_NULL;
@@ -880,7 +881,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 107 "queryLexer.l"
+#line 108 "queryLexer.l"
 {
 
     return TOK_NOT;
@@ -888,7 +889,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 112 "queryLexer.l"
+#line 113 "queryLexer.l"
 {
 
     return TOK_AND;
@@ -896,7 +897,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 117 "queryLexer.l"
+#line 118 "queryLexer.l"
 {
 
     return TOK_OR;
@@ -904,7 +905,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 122 "queryLexer.l"
+#line 123 "queryLexer.l"
 {
 
     return TOK_ISA;
@@ -912,7 +913,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 127 "queryLexer.l"
+#line 128 "queryLexer.l"
 {
 
     return TOK_IS;
@@ -920,14 +921,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 132 "queryLexer.l"
+#line 133 "queryLexer.l"
 {
     return TOK_LIKE;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 136 "queryLexer.l"
+#line 137 "queryLexer.l"
 {
 
     sfcQuerylval.intValue = strtol(sfcQuerytext, (char**)0, 10);
@@ -936,7 +937,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 142 "queryLexer.l"
+#line 143 "queryLexer.l"
 {
 
     sfcQuerylval.intValue = 0;
@@ -945,7 +946,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 148 "queryLexer.l"
+#line 149 "queryLexer.l"
 {
 
     sfcQuerylval.doubleValue = strtod((char*)sfcQuerytext, (char**)0);
@@ -954,7 +955,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 154 "queryLexer.l"
+#line 155 "queryLexer.l"
 {
 
     {
@@ -970,7 +971,7 @@ case 17:
 (sfcQuery_c_buf_p) = sfcQuery_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up sfcQuerytext again */
 YY_RULE_SETUP
-#line 164 "queryLexer.l"
+#line 165 "queryLexer.l"
 {
 
     sfcQueryErr("Unterminated string");
@@ -978,7 +979,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 169 "queryLexer.l"
+#line 170 "queryLexer.l"
 {
 
     {
@@ -994,7 +995,7 @@ case 19:
 (sfcQuery_c_buf_p) = sfcQuery_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up sfcQuerytext again */
 YY_RULE_SETUP
-#line 179 "queryLexer.l"
+#line 180 "queryLexer.l"
 {
 
     sfcQueryErr("Unterminated string");
@@ -1002,7 +1003,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 184 "queryLexer.l"
+#line 185 "queryLexer.l"
 { 
 
     return sfcQuerytext[0];
@@ -1010,14 +1011,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 189 "queryLexer.l"
+#line 190 "queryLexer.l"
 { 
     return TOK_EQ; 
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 193 "queryLexer.l"
+#line 194 "queryLexer.l"
 { 
 
     return TOK_NE; 
@@ -1025,49 +1026,49 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 199 "queryLexer.l"
+#line 200 "queryLexer.l"
 { 
     return TOK_NE; 
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 203 "queryLexer.l"
+#line 204 "queryLexer.l"
 { 
     return TOK_LE; 
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 207 "queryLexer.l"
+#line 208 "queryLexer.l"
 { 
     return TOK_LT; 
 }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 211 "queryLexer.l"
+#line 212 "queryLexer.l"
 { 
     return TOK_GE; 
 }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 215 "queryLexer.l"
+#line 216 "queryLexer.l"
 { 
     return TOK_GT; 
 }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 219 "queryLexer.l"
+#line 220 "queryLexer.l"
 { 
     return TOK_SCOPE; 
 }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 223 "queryLexer.l"
+#line 224 "queryLexer.l"
 {
 
     {
@@ -1081,14 +1082,14 @@ YY_RULE_SETUP
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-#line 233 "queryLexer.l"
+#line 234 "queryLexer.l"
 {
     /* Ignore blanks */
 }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 237 "queryLexer.l"
+#line 238 "queryLexer.l"
 {
     sfcQuerylval.intValue = 0;
     return TOK_UNEXPECTED_CHAR;
@@ -1096,10 +1097,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 242 "queryLexer.l"
+#line 243 "queryLexer.l"
 ECHO;
 	YY_BREAK
-#line 1103 "<stdout>"
+#line 1104 "<stdout>"
 case YY_STATE_EOF(INITIAL):
 	sfcQueryterminate();
 
@@ -2057,7 +2058,7 @@ void sfcQueryfree (void * ptr )
 
 #define YYTABLES_NAME "sfcQuerytables"
 
-#line 242 "queryLexer.l"
+#line 243 "queryLexer.l"
 
 
 

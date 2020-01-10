@@ -1,5 +1,5 @@
 /**
- * $Id: backend_sfcb.c,v 1.21 2009/12/22 00:18:29 buccella Exp $
+ * $Id: backend_sfcb.c,v 1.22 2011/03/31 15:41:47 buccella Exp $
  *
  * (C) Copyright IBM Corp. 2004
  * 
@@ -465,6 +465,10 @@ int sfcb_add_instance(class_entry * ie, const char * ns)
 			inst_props -> prop_id, ie -> class_id );
 		}
 		class_prop = check_for_prop(ce, inst_props->prop_id);
+		if (!class_prop) {
+		  fprintf(stderr, "bad property name \"%s\"\n", inst_props->prop_id);
+		  return 1;
+		}
 		data = make_cmpi_data(class_prop->prop_type, class_prop->prop_array, inst_props->prop_value);
 		ClInstanceAddProperty(inst, inst_props->prop_id, data);
 		inst_props = inst_props->prop_next;

@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include "control.h"
-
+#include <grp.h>
 
 extern unsigned long exFlags;
 
@@ -681,6 +681,7 @@ void localConnectServer()
    int nsocket,ssocket;
    unsigned int cl, notDone=1;
    char *path;
+   char *gperm = NULL;
    
    struct _msg {
       unsigned int size;
@@ -711,6 +712,29 @@ void localConnectServer()
       perror("bind error");
       return;
    }
+
+   getControlChars("socketPathGroupPerm", &gperm);
+   if (NULL != gperm) {
+      struct group *objgperm;
+      if (NULL == (objgperm = getgrnam(gperm))) {
+         mlogf(M_INFO,M_SHOW,"--- localConnectServer getgrnam failed: %s\n", strerror(errno));
+      } else {
+         // change the socket group ownership as requested
+         if (chown(path, getuid(), objgperm->gr_gid)) {
+            mlogf(M_INFO,M_SHOW,"--- localConnectServer chown failed: %s\n", strerror(errno));
+         } else {
+            struct stat sobj;
+            // change the socket permission to allow group as requested
+            if (stat(path, &sobj)) {
+               mlogf(M_INFO,M_SHOW,"--- localConnectServer stat failed: %s\n", strerror(errno));
+            } else {
+               if (chmod(path, (sobj.st_mode | S_IWGRP))) {
+                  mlogf(M_INFO,M_SHOW,"--- localConnectServer chmod failed: %s\n", strerror(errno));
+               }
+            }
+         }
+      }
+   }
    
    listen(ssocket,1);
    
@@ -727,12 +751,12 @@ void localConnectServer()
       }
 
       read(nsocket, &msg.size, sizeof(msg.size));
-      read(nsocket, &msg.oper, msg.size);
       int maxMsgSize = sizeof(struct _msg) - offsetof(struct _msg, oper);
       if (msg.size > maxMsgSize) {
 	mlogf(M_INFO,M_SHOW,"--- localConnectServer: message size %d > max %d\n", maxMsgSize);
 	abort();
       }
+      read(nsocket, &msg.oper, msg.size);
       
       if (msg.size!=0) {
          mlogf(M_INFO,M_SHOW,"--- Local Client connect - pid: %d user: %s\n",

@@ -195,6 +195,7 @@ registerCIMService(cimSLPService css, int slpLifeTime, char **urlsyntax,
   SLPError        callbackerr = 0;
   char           *attrstring;
   int             retCode = 0;
+  int             changed = 0;
 
   _SFCB_ENTER(TRACE_SLP, "registerCIMService");
 
@@ -294,6 +295,7 @@ registerCIMService(cimSLPService css, int slpLifeTime, char **urlsyntax,
         _SFCB_TRACE(2, ("--- SLP deregistration error, *urlsyntax = \"%s\"\n", *urlsyntax));
       free(*gAttrstring);
     }
+    changed = 1;
   }
   err = SLPReg(hslp,
                *urlsyntax,
@@ -301,11 +303,6 @@ registerCIMService(cimSLPService css, int slpLifeTime, char **urlsyntax,
                NULL, attrstring, SLP_TRUE, onErrorFnc, &callbackerr);
   if(callbackerr != SLP_OK)
     _SFCB_TRACE(2, ("--- SLP registration error, *urlsyntax = \"%s\"\n", *urlsyntax));
-
-#ifdef HAVE_SLP_ALONE
-  printf("url_syntax: %s\n", css.url_syntax);
-  printf("attrsting: %s\n", attrstring);
-#endif
 
   if ((err != SLP_OK) || (callbackerr != SLP_OK)) {
     printf("Error registering service with slp %i\n", err);
@@ -317,11 +314,11 @@ registerCIMService(cimSLPService css, int slpLifeTime, char **urlsyntax,
     retCode = callbackerr;
   }
   // only save the last state when something changed to not waste mallocs
-  if (strcmp(attrstring, *gAttrstring)) {
-    *gAttrstring = strdup(attrstring);
+  if(changed) {
+    *gAttrstring = attrstring;
+  } else {
+    free(attrstring);
   }
-
-  free(attrstring);
   freeCSS(css);
 
   SLPClose(hslp);

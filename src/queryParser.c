@@ -1,24 +1,23 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,7 +28,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -47,7 +46,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.3"
+#define YYBISON_VERSION "2.4.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -55,81 +54,28 @@
 /* Pure parsers.  */
 #define YYPURE 0
 
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
 /* Substitute the variable and function names.  */
-#define yyparse sfcQueryparse
-#define yylex   sfcQuerylex
-#define yyerror sfcQueryerror
-#define yylval  sfcQuerylval
-#define yychar  sfcQuerychar
-#define yydebug sfcQuerydebug
-#define yynerrs sfcQuerynerrs
-
-
-/* Tokens.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     TOK_INTEGER = 258,
-     TOK_DOUBLE = 259,
-     TOK_STRING = 260,
-     TOK_TRUE = 261,
-     TOK_FALSE = 262,
-     TOK_NULL = 263,
-     TOK_EQ = 264,
-     TOK_NE = 265,
-     TOK_LT = 266,
-     TOK_LE = 267,
-     TOK_GT = 268,
-     TOK_GE = 269,
-     TOK_NOT = 270,
-     TOK_OR = 271,
-     TOK_AND = 272,
-     TOK_IS = 273,
-     TOK_ISA = 274,
-     TOK_SCOPE = 275,
-     TOK_IDENTIFIER = 276,
-     TOK_SELECT = 277,
-     TOK_WHERE = 278,
-     TOK_FROM = 279,
-     TOK_LIKE = 280,
-     TOK_UNEXPECTED_CHAR = 281
-   };
-#endif
-/* Tokens.  */
-#define TOK_INTEGER 258
-#define TOK_DOUBLE 259
-#define TOK_STRING 260
-#define TOK_TRUE 261
-#define TOK_FALSE 262
-#define TOK_NULL 263
-#define TOK_EQ 264
-#define TOK_NE 265
-#define TOK_LT 266
-#define TOK_LE 267
-#define TOK_GT 268
-#define TOK_GE 269
-#define TOK_NOT 270
-#define TOK_OR 271
-#define TOK_AND 272
-#define TOK_IS 273
-#define TOK_ISA 274
-#define TOK_SCOPE 275
-#define TOK_IDENTIFIER 276
-#define TOK_SELECT 277
-#define TOK_WHERE 278
-#define TOK_FROM 279
-#define TOK_LIKE 280
-#define TOK_UNEXPECTED_CHAR 281
-
-
+#define yyparse         sfcQueryparse
+#define yylex           sfcQuerylex
+#define yyerror         sfcQueryerror
+#define yylval          sfcQuerylval
+#define yychar          sfcQuerychar
+#define yydebug         sfcQuerydebug
+#define yynerrs         sfcQuerynerrs
 
 
 /* Copy the first part of user declarations.  */
+
+/* Line 189 of yacc.c  */
 #line 10 "queryParser.y"
 
 
@@ -212,6 +158,9 @@ extern QLOperand* newNameQueryOperand(QLStatement *qs, char* val);
 
 
 
+/* Line 189 of yacc.c  */
+#line 163 "queryParser.c"
+
 /* Enabling traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -230,10 +179,75 @@ extern QLOperand* newNameQueryOperand(QLStatement *qs, char* val);
 # define YYTOKEN_TABLE 0
 #endif
 
+
+/* Tokens.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     TOK_INTEGER = 258,
+     TOK_DOUBLE = 259,
+     TOK_STRING = 260,
+     TOK_TRUE = 261,
+     TOK_FALSE = 262,
+     TOK_NULL = 263,
+     TOK_EQ = 264,
+     TOK_NE = 265,
+     TOK_LT = 266,
+     TOK_LE = 267,
+     TOK_GT = 268,
+     TOK_GE = 269,
+     TOK_NOT = 270,
+     TOK_OR = 271,
+     TOK_AND = 272,
+     TOK_IS = 273,
+     TOK_ISA = 274,
+     TOK_SCOPE = 275,
+     TOK_IDENTIFIER = 276,
+     TOK_SELECT = 277,
+     TOK_WHERE = 278,
+     TOK_FROM = 279,
+     TOK_LIKE = 280,
+     TOK_UNEXPECTED_CHAR = 281
+   };
+#endif
+/* Tokens.  */
+#define TOK_INTEGER 258
+#define TOK_DOUBLE 259
+#define TOK_STRING 260
+#define TOK_TRUE 261
+#define TOK_FALSE 262
+#define TOK_NULL 263
+#define TOK_EQ 264
+#define TOK_NE 265
+#define TOK_LT 266
+#define TOK_LE 267
+#define TOK_GT 268
+#define TOK_GE 269
+#define TOK_NOT 270
+#define TOK_OR 271
+#define TOK_AND 272
+#define TOK_IS 273
+#define TOK_ISA 274
+#define TOK_SCOPE 275
+#define TOK_IDENTIFIER 276
+#define TOK_SELECT 277
+#define TOK_WHERE 278
+#define TOK_FROM 279
+#define TOK_LIKE 280
+#define TOK_UNEXPECTED_CHAR 281
+
+
+
+
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 100 "queryParser.y"
 {
+
+/* Line 214 of yacc.c  */
+#line 100 "queryParser.y"
+
    long intValue;
    double doubleValue;
    char* strValue;
@@ -244,22 +258,23 @@ typedef union YYSTYPE
    QLOperand* comparisonTerm;
    QLOperation* searchCondition;
    QLOperation* predicate;
-}
-/* Line 187 of yacc.c.  */
-#line 250 "queryParser.c"
-	YYSTYPE;
+
+
+
+/* Line 214 of yacc.c  */
+#line 266 "queryParser.c"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 216 of yacc.c.  */
-#line 263 "queryParser.c"
+/* Line 264 of yacc.c  */
+#line 278 "queryParser.c"
 
 #ifdef short
 # undef short
@@ -334,14 +349,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int i)
+YYID (int yyi)
 #else
 static int
-YYID (i)
-    int i;
+YYID (yyi)
+    int yyi;
 #endif
 {
-  return i;
+  return yyi;
 }
 #endif
 
@@ -422,9 +437,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -458,12 +473,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
+	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
+	Stack = &yyptr->Stack_alloc;					\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -903,17 +918,20 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 #else
 static void
-yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
+yy_stack_print (yybottom, yytop)
+    yytype_int16 *yybottom;
+    yytype_int16 *yytop;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
@@ -947,11 +965,11 @@ yy_reduce_print (yyvsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      fprintf (stderr, "   $%d = ", yyi + 1);
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       );
-      fprintf (stderr, "\n");
+      YYFPRINTF (stderr, "\n");
     }
 }
 
@@ -1231,10 +1249,8 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
-
 
 /* Prevent warnings from -Wmissing-prototypes.  */
-
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -1250,11 +1266,10 @@ int yyparse ();
 #endif /* ! YYPARSE_PARAM */
 
 
-
-/* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
+/* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 
 /* Number of syntax errors so far.  */
@@ -1262,9 +1277,9 @@ int yynerrs;
 
 
 
-/*----------.
-| yyparse.  |
-`----------*/
+/*-------------------------.
+| yyparse or yypush_parse.  |
+`-------------------------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -1288,14 +1303,39 @@ yyparse ()
 #endif
 #endif
 {
-  
-  int yystate;
+
+
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       `yyss': related to states.
+       `yyvs': related to semantic values.
+
+       Refer to the stacks thru separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
   int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead token as an internal (translated) token number.  */
+  int yytoken;
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -1303,51 +1343,28 @@ yyparse ()
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
-
-
-
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
+
+  yytoken = 0;
+  yyss = yyssa;
+  yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
+  yychar = YYEMPTY; /* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
-
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -1377,7 +1394,6 @@ yyparse ()
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
-
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -1385,7 +1401,6 @@ yyparse ()
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -1408,9 +1423,8 @@ yyparse ()
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+	YYSTACK_RELOCATE (yyss_alloc, yyss);
+	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1421,7 +1435,6 @@ yyparse ()
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -1431,6 +1444,9 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
+  if (yystate == YYFINAL)
+    YYACCEPT;
+
   goto yybackup;
 
 /*-----------.
@@ -1439,16 +1455,16 @@ yyparse ()
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -1480,20 +1496,16 @@ yybackup:
       goto yyreduce;
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
+  /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -1533,12 +1545,16 @@ yyreduce:
   switch (yyn)
     {
         case 2:
+
+/* Line 1455 of yacc.c  */
 #line 190 "queryParser.y"
     {
     }
     break;
 
   case 3:
+
+/* Line 1455 of yacc.c  */
 #line 195 "queryParser.y"
     {
 
@@ -1546,6 +1562,8 @@ yyreduce:
     break;
 
   case 4:
+
+/* Line 1455 of yacc.c  */
 #line 201 "queryParser.y"
     {
        QS->ft->setAllProperties(QS,1);
@@ -1553,6 +1571,8 @@ yyreduce:
     break;
 
   case 5:
+
+/* Line 1455 of yacc.c  */
 #line 205 "queryParser.y"
     {
 
@@ -1560,6 +1580,8 @@ yyreduce:
     break;
 
   case 6:
+
+/* Line 1455 of yacc.c  */
 #line 211 "queryParser.y"
     {
        QS->ft->appendSelectPropertyName(QS,qsStrDup(QS,(yyvsp[(1) - (1)].strValue)));
@@ -1567,6 +1589,8 @@ yyreduce:
     break;
 
   case 7:
+
+/* Line 1455 of yacc.c  */
 #line 215 "queryParser.y"
     {
        QS->ft->appendSelectPropertyName(QS,qsStrDup(QS,(yyvsp[(3) - (3)].strValue)));
@@ -1574,6 +1598,8 @@ yyreduce:
     break;
 
   case 8:
+
+/* Line 1455 of yacc.c  */
 #line 221 "queryParser.y"
     {
 
@@ -1581,30 +1607,40 @@ yyreduce:
     break;
 
   case 9:
+
+/* Line 1455 of yacc.c  */
 #line 225 "queryParser.y"
     {
     }
     break;
 
   case 10:
+
+/* Line 1455 of yacc.c  */
 #line 230 "queryParser.y"
     {
     }
     break;
 
   case 11:
+
+/* Line 1455 of yacc.c  */
 #line 235 "queryParser.y"
     {
     }
     break;
 
   case 12:
+
+/* Line 1455 of yacc.c  */
 #line 238 "queryParser.y"
     {
     }
     break;
 
   case 13:
+
+/* Line 1455 of yacc.c  */
 #line 243 "queryParser.y"
     {
        QS->ft->addFromClass(QS,qsStrDup(QS,(yyvsp[(1) - (2)].strValue)),(yyvsp[(2) - (2)].strValue));
@@ -1612,6 +1648,8 @@ yyreduce:
     break;
 
   case 14:
+
+/* Line 1455 of yacc.c  */
 #line 247 "queryParser.y"
     {
         QS->ft->addFromClass(QS,qsStrDup(QS,(yyvsp[(1) - (1)].strValue)),NULL);
@@ -1619,6 +1657,8 @@ yyreduce:
     break;
 
   case 15:
+
+/* Line 1455 of yacc.c  */
 #line 253 "queryParser.y"
     {
        QS->ft->setWhereCondition(QS,(QLOperation*)(yyvsp[(2) - (2)].searchCondition));
@@ -1626,6 +1666,8 @@ yyreduce:
     break;
 
   case 16:
+
+/* Line 1455 of yacc.c  */
 #line 259 "queryParser.y"
     {
        (yyval.searchCondition)=newOrOperation(QS,(yyvsp[(1) - (3)].searchCondition),(yyvsp[(3) - (3)].searchCondition));
@@ -1634,6 +1676,8 @@ yyreduce:
     break;
 
   case 17:
+
+/* Line 1455 of yacc.c  */
 #line 264 "queryParser.y"
     {
        (yyval.searchCondition)=newAndOperation(QS,(yyvsp[(1) - (3)].searchCondition),(yyvsp[(3) - (3)].searchCondition));
@@ -1642,6 +1686,8 @@ yyreduce:
     break;
 
   case 18:
+
+/* Line 1455 of yacc.c  */
 #line 269 "queryParser.y"
     {
        (yyval.searchCondition)=newNotOperation(QS,(yyvsp[(2) - (2)].searchCondition));
@@ -1649,6 +1695,8 @@ yyreduce:
     break;
 
   case 19:
+
+/* Line 1455 of yacc.c  */
 #line 273 "queryParser.y"
     {
        (yyval.searchCondition)=(yyvsp[(2) - (3)].searchCondition);
@@ -1656,6 +1704,8 @@ yyreduce:
     break;
 
   case 20:
+
+/* Line 1455 of yacc.c  */
 #line 277 "queryParser.y"
     {
        (yyval.searchCondition)=newBinaryOperation(QS,(yyvsp[(1) - (1)].predicate));
@@ -1663,6 +1713,8 @@ yyreduce:
     break;
 
   case 21:
+
+/* Line 1455 of yacc.c  */
 #line 281 "queryParser.y"
     {
        if (QS->lang==QL_WQL) {
@@ -1678,6 +1730,8 @@ yyreduce:
     break;
 
   case 22:
+
+/* Line 1455 of yacc.c  */
 #line 293 "queryParser.y"
     {
        if (QS->lang==QL_WQL) {
@@ -1692,6 +1746,8 @@ yyreduce:
     break;
 
   case 23:
+
+/* Line 1455 of yacc.c  */
 #line 306 "queryParser.y"
     {
        (yyval.intValue) = 1;
@@ -1699,6 +1755,8 @@ yyreduce:
     break;
 
   case 24:
+
+/* Line 1455 of yacc.c  */
 #line 310 "queryParser.y"
     {
        (yyval.intValue) = 0;
@@ -1706,6 +1764,8 @@ yyreduce:
     break;
 
   case 25:
+
+/* Line 1455 of yacc.c  */
 #line 319 "queryParser.y"
     {
        (yyval.predicate)=(yyvsp[(1) - (1)].predicate);
@@ -1713,6 +1773,8 @@ yyreduce:
     break;
 
   case 26:
+
+/* Line 1455 of yacc.c  */
 #line 323 "queryParser.y"
     {
        (yyval.predicate)=(yyvsp[(1) - (1)].predicate);
@@ -1720,6 +1782,8 @@ yyreduce:
     break;
 
   case 27:
+
+/* Line 1455 of yacc.c  */
 #line 329 "queryParser.y"
     {
        (yyval.predicate)=newLtOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1727,6 +1791,8 @@ yyreduce:
     break;
 
   case 28:
+
+/* Line 1455 of yacc.c  */
 #line 333 "queryParser.y"
     {
        (yyval.predicate)=newGtOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1734,6 +1800,8 @@ yyreduce:
     break;
 
   case 29:
+
+/* Line 1455 of yacc.c  */
 #line 337 "queryParser.y"
     {
        (yyval.predicate)=newLeOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1741,6 +1809,8 @@ yyreduce:
     break;
 
   case 30:
+
+/* Line 1455 of yacc.c  */
 #line 341 "queryParser.y"
     {
        (yyval.predicate)=newGeOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1748,6 +1818,8 @@ yyreduce:
     break;
 
   case 31:
+
+/* Line 1455 of yacc.c  */
 #line 345 "queryParser.y"
     {
        (yyval.predicate)=newEqOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1756,6 +1828,8 @@ yyreduce:
     break;
 
   case 32:
+
+/* Line 1455 of yacc.c  */
 #line 350 "queryParser.y"
     {
        (yyval.predicate)=newNeOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1763,6 +1837,8 @@ yyreduce:
     break;
 
   case 33:
+
+/* Line 1455 of yacc.c  */
 #line 354 "queryParser.y"
     {
        (yyval.predicate)=newIsaOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1770,6 +1846,8 @@ yyreduce:
     break;
 
   case 34:
+
+/* Line 1455 of yacc.c  */
 #line 358 "queryParser.y"
     {
        (yyval.predicate)=newLikeOperation(QS,(yyvsp[(1) - (3)].comparisonTerm),(yyvsp[(3) - (3)].comparisonTerm));
@@ -1777,6 +1855,8 @@ yyreduce:
     break;
 
   case 35:
+
+/* Line 1455 of yacc.c  */
 #line 362 "queryParser.y"
     {
        (yyval.predicate)=newNotLikeOperation(QS,(yyvsp[(1) - (4)].comparisonTerm),(yyvsp[(4) - (4)].comparisonTerm));
@@ -1784,6 +1864,8 @@ yyreduce:
     break;
 
   case 36:
+
+/* Line 1455 of yacc.c  */
 #line 368 "queryParser.y"
     {
        (yyval.predicate)=newIsNullOperation(QS,(yyvsp[(1) - (3)].comparisonTerm));
@@ -1791,6 +1873,8 @@ yyreduce:
     break;
 
   case 37:
+
+/* Line 1455 of yacc.c  */
 #line 372 "queryParser.y"
     {
        (yyval.predicate)=newIsNotNullOperation(QS,(yyvsp[(1) - (4)].comparisonTerm));
@@ -1798,6 +1882,8 @@ yyreduce:
     break;
 
   case 38:
+
+/* Line 1455 of yacc.c  */
 #line 378 "queryParser.y"
     {
        QL_TRACE(fprintf(stderr,"### initPropName\n"));
@@ -1806,6 +1892,8 @@ yyreduce:
     break;
 
   case 39:
+
+/* Line 1455 of yacc.c  */
 #line 385 "queryParser.y"
     {
        QL_TRACE(fprintf(stderr,"-#- classPropertyName: classPropertyName '.' fullPropertyName\n"));
@@ -1813,6 +1901,8 @@ yyreduce:
     break;
 
   case 40:
+
+/* Line 1455 of yacc.c  */
 #line 389 "queryParser.y"
     {
        QL_TRACE(fprintf(stderr,"-#- classPropertyName: fullPropertyName\n"));
@@ -1820,12 +1910,16 @@ yyreduce:
     break;
 
   case 41:
+
+/* Line 1455 of yacc.c  */
 #line 393 "queryParser.y"
     {
     }
     break;
 
   case 42:
+
+/* Line 1455 of yacc.c  */
 #line 399 "queryParser.y"
     {
        QL_TRACE(fprintf(stderr,"-#- fullPropertyName: propertyIdentifier  %s\n",(yyvsp[(1) - (1)].strValue)));
@@ -1834,6 +1928,8 @@ yyreduce:
     break;
 
   case 43:
+
+/* Line 1455 of yacc.c  */
 #line 404 "queryParser.y"
     {
        QL_TRACE(fprintf(stderr,"-#- fullPropertyName: propertyClassIdentifier TOK_SCOPE propertyIdentifier %s::%s\n",(yyvsp[(1) - (3)].strValue),(yyvsp[(3) - (3)].strValue)));
@@ -1847,6 +1943,8 @@ yyreduce:
     break;
 
   case 44:
+
+/* Line 1455 of yacc.c  */
 #line 416 "queryParser.y"
     {
        (yyval.strValue)=(yyvsp[(1) - (1)].strValue);
@@ -1854,6 +1952,8 @@ yyreduce:
     break;
 
   case 45:
+
+/* Line 1455 of yacc.c  */
 #line 421 "queryParser.y"
     {
        (yyval.strValue) = (yyvsp[(1) - (1)].strValue);
@@ -1861,6 +1961,8 @@ yyreduce:
     break;
 
   case 46:
+
+/* Line 1455 of yacc.c  */
 #line 426 "queryParser.y"
     {
        (yyval.strValue) = (yyvsp[(1) - (1)].strValue);
@@ -1868,6 +1970,8 @@ yyreduce:
     break;
 
   case 47:
+
+/* Line 1455 of yacc.c  */
 #line 433 "queryParser.y"
     {
        (yyval.comparisonTerm)=newNameQueryOperand(QS,qsStrDup(QS,(yyvsp[(1) - (1)].strValue)));
@@ -1875,6 +1979,8 @@ yyreduce:
     break;
 
   case 48:
+
+/* Line 1455 of yacc.c  */
 #line 439 "queryParser.y"
     {
        (yyval.comparisonTerm)=newPropQueryOperand(QS,QC->propName);
@@ -1883,6 +1989,8 @@ yyreduce:
     break;
 
   case 49:
+
+/* Line 1455 of yacc.c  */
 #line 444 "queryParser.y"
     {
        (yyval.comparisonTerm)=newIntQueryOperand(QS,(yyvsp[(1) - (1)].intValue));
@@ -1890,6 +1998,8 @@ yyreduce:
     break;
 
   case 50:
+
+/* Line 1455 of yacc.c  */
 #line 448 "queryParser.y"
     {
        (yyval.comparisonTerm)=newDoubleQueryOperand(QS,(yyvsp[(1) - (1)].doubleValue));
@@ -1897,6 +2007,8 @@ yyreduce:
     break;
 
   case 51:
+
+/* Line 1455 of yacc.c  */
 #line 452 "queryParser.y"
     {
        (yyval.comparisonTerm)=newCharsQueryOperand(QS,qsStrDup(QS,(yyvsp[(1) - (1)].strValue)));
@@ -1904,6 +2016,8 @@ yyreduce:
     break;
 
   case 52:
+
+/* Line 1455 of yacc.c  */
 #line 456 "queryParser.y"
     {
        (yyval.comparisonTerm)=newBooleanQueryOperand(QS,(yyvsp[(1) - (1)].intValue));
@@ -1911,6 +2025,8 @@ yyreduce:
     break;
 
   case 56:
+
+/* Line 1455 of yacc.c  */
 #line 469 "queryParser.y"
     {
        int fnc=QL_FNC_NoFunction;
@@ -1940,8 +2056,9 @@ yyreduce:
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 1945 "queryParser.c"
+
+/* Line 1455 of yacc.c  */
+#line 2062 "queryParser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1951,7 +2068,6 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2017,7 +2133,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
+      /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -2034,7 +2150,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -2091,9 +2207,6 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   *++yyvsp = yylval;
 
 
@@ -2118,7 +2231,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
+#if !defined(yyoverflow) || YYERROR_VERBOSE
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -2129,7 +2242,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
+  if (yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -2155,6 +2268,8 @@ yyreturn:
 }
 
 
+
+/* Line 1675 of yacc.c  */
 #line 495 "queryParser.y"
 
 

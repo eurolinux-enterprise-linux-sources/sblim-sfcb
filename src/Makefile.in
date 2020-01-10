@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $Id: Makefile.am,v 1.108 2010/05/22 01:26:13 buccella Exp $  
+# $Id: Makefile.am,v 1.109 2010/08/20 20:00:17 buccella Exp $  
 #
 #  Makefile.am
 # 
@@ -322,6 +322,13 @@ libsfcQualifierProvider_la_OBJECTS =  \
 	$(am_libsfcQualifierProvider_la_OBJECTS)
 @QUALREP_TRUE@am_libsfcQualifierProvider_la_rpath = -rpath \
 @QUALREP_TRUE@	$(sfcblibdir)
+libsfcSlpHostname_la_LIBADD =
+am__libsfcSlpHostname_la_SOURCES_DIST = sfcSlpHostname.c
+@SLP_HOSTNAME_LIB_TRUE@am_libsfcSlpHostname_la_OBJECTS =  \
+@SLP_HOSTNAME_LIB_TRUE@	sfcSlpHostname.lo
+libsfcSlpHostname_la_OBJECTS = $(am_libsfcSlpHostname_la_OBJECTS)
+@SLP_HOSTNAME_LIB_TRUE@am_libsfcSlpHostname_la_rpath = -rpath \
+@SLP_HOSTNAME_LIB_TRUE@	$(sfcblibdir)
 libsfcUtil_la_LIBADD =
 am_libsfcUtil_la_OBJECTS = hashtable.lo utilFactory.lo \
 	utilHashtable.lo utilStringBuffer.lo
@@ -399,7 +406,8 @@ SOURCES = $(libTestAssociationProvider_la_SOURCES) \
 	$(libsfcInteropServerProvider_la_SOURCES) \
 	$(libsfcObjectImplSwapI32toP32_la_SOURCES) \
 	$(libsfcProfileProvider_la_SOURCES) \
-	$(libsfcQualifierProvider_la_SOURCES) $(libsfcUtil_la_SOURCES) \
+	$(libsfcQualifierProvider_la_SOURCES) \
+	$(libsfcSlpHostname_la_SOURCES) $(libsfcUtil_la_SOURCES) \
 	$(classSchema2c_SOURCES) $(sfcbd_SOURCES) $(sfcbdump_SOURCES) \
 	sfcbdumpP32onI32.c $(sfcbinst2mof_SOURCES) \
 	$(sfcbmofpp_SOURCES)
@@ -429,6 +437,7 @@ DIST_SOURCES = $(am__libTestAssociationProvider_la_SOURCES_DIST) \
 	$(libsfcObjectImplSwapI32toP32_la_SOURCES) \
 	$(am__libsfcProfileProvider_la_SOURCES_DIST) \
 	$(am__libsfcQualifierProvider_la_SOURCES_DIST) \
+	$(am__libsfcSlpHostname_la_SOURCES_DIST) \
 	$(libsfcUtil_la_SOURCES) $(classSchema2c_SOURCES) \
 	$(sfcbd_SOURCES) $(sfcbdump_SOURCES) sfcbdumpP32onI32.c \
 	$(sfcbinst2mof_SOURCES) $(sfcbmofpp_SOURCES)
@@ -695,7 +704,8 @@ sfcblib_LTLIBRARIES = libsfcUtil.la libsfcBrokerCore.la \
 	libsfcBasicAuthentication.la \
 	libsfcCertificateAuthentication.la \
 	libsfcObjectImplSwapI32toP32.la libcimcClientSfcbLocal.la \
-	$(QUALREP_LIBS) $(INDICATION_LIBS) $(PAM_LIBS) $(am__append_1)
+	$(QUALREP_LIBS) $(INDICATION_LIBS) $(PAM_LIBS) \
+	$(SLP_HOSTNAME_LIBS) $(am__append_1)
 
 # if SLP_ALONE
 # SLP_PROGRAMFILES = cimslp
@@ -1140,6 +1150,8 @@ libsfcProfileProvider.la: $(libsfcProfileProvider_la_OBJECTS) $(libsfcProfilePro
 	$(LINK) -rpath $(sfcblibdir) $(libsfcProfileProvider_la_OBJECTS) $(libsfcProfileProvider_la_LIBADD) $(LIBS)
 libsfcQualifierProvider.la: $(libsfcQualifierProvider_la_OBJECTS) $(libsfcQualifierProvider_la_DEPENDENCIES) 
 	$(LINK) $(am_libsfcQualifierProvider_la_rpath) $(libsfcQualifierProvider_la_OBJECTS) $(libsfcQualifierProvider_la_LIBADD) $(LIBS)
+libsfcSlpHostname.la: $(libsfcSlpHostname_la_OBJECTS) $(libsfcSlpHostname_la_DEPENDENCIES) 
+	$(LINK) $(am_libsfcSlpHostname_la_rpath) $(libsfcSlpHostname_la_OBJECTS) $(libsfcSlpHostname_la_LIBADD) $(LIBS)
 libsfcUtil.la: $(libsfcUtil_la_OBJECTS) $(libsfcUtil_la_DEPENDENCIES) 
 	$(libsfcUtil_la_LINK) -rpath $(sfcblibdir) $(libsfcUtil_la_OBJECTS) $(libsfcUtil_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
@@ -1385,6 +1397,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcBasicPAMAuthentication.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcBroker.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcCertificateAuthentication.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcSlpHostname.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcbdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcbdumpP32onI32.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sfcbinst2mof.Po@am__quote@

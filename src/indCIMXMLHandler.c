@@ -45,6 +45,8 @@ extern void setStatus(CMPIStatus *st, CMPIrc rc, char *msg);
 
 extern ExpSegments exportIndicationReq(CMPIInstance *ci, char *id);
 
+extern void memLinkObjectPath(CMPIObjectPath *op);
+
 static const CMPIBroker *_broker;
 
 static int interOpNameSpace(const CMPIObjectPath *cop, CMPIStatus *st) 
@@ -232,6 +234,33 @@ CMPIStatus IndCIMXMLHandlerCreateInstance(CMPIInstanceMI * mi,
    }
 
    CMPIInstance* ciLocal = CMClone(ci, NULL);
+   memLinkInstance(ciLocal);
+   CMPIObjectPath* copLocal = CMClone(cop, NULL);
+   memLinkObjectPath(copLocal);
+
+   CMPIString     *ccn = ciLocal->ft->getProperty(ciLocal, "creationclassname",
+						  &st).value.string;
+   if (CMIsNullObject(ccn)) {
+     setStatus(&st, CMPI_RC_ERR_FAILED,
+	       "CreationClassName property not found");
+     _SFCB_RETURN(st);
+   }
+   CMPIString     *sccn = ciLocal->ft->getProperty(ciLocal, "systemcreationclassname",
+						   &st).value.string;
+   if (CMIsNullObject(sccn)) {
+     setStatus(&st, CMPI_RC_ERR_FAILED,
+	       "SystemCreationClassName property not found");
+     _SFCB_RETURN(st);
+   }
+
+   CMPIString *sysname=ciLocal->ft->getProperty(ciLocal,"SystemName",&st).value.string;
+   if (sysname == NULL || sysname->hdl == NULL) {
+     char hostName[512];
+     hostName[0]=0;
+     gethostname(hostName,511); /* should be the same as SystemName of IndicationService */
+     CMAddKey(copLocal, "SystemName", hostName, CMPI_chars);
+     CMSetProperty(ciLocal,"SystemName",hostName,CMPI_chars);
+   }
 
    CMPIString* dest = CMGetProperty(ciLocal, "destination", &st).value.string;
    if (dest == NULL || CMGetCharPtr(dest) == NULL) {
@@ -241,8 +270,8 @@ CMPIStatus IndCIMXMLHandlerCreateInstance(CMPIInstanceMI * mi,
    }
    else { /* if no scheme is given, assume http (as req. for param by mof) */
      char* ds = CMGetCharPtr(dest);
-     if (strchr(ds, ':') == NULL) {
-       char* prefix = "http:";
+     if (strstr(ds, "://") == NULL) {
+       char* prefix = "http://";
        int n = strlen(ds)+strlen(prefix)+1;
        char* newdest = (char*)malloc(n*sizeof(char));
        strcpy(newdest, prefix);
@@ -266,20 +295,23 @@ CMPIStatus IndCIMXMLHandlerCreateInstance(CMPIInstanceMI * mi,
    }
    CMSetProperty(ciLocal, "persistencetype", &persistenceType, CMPI_uint16);
 
-            CMPIString *str=CDToString(_broker,cop,NULL);
-            CMPIString *ns=CMGetNameSpace(cop,NULL);
+            CMPIString *str=CDToString(_broker,copLocal,NULL);
+            CMPIString *ns=CMGetNameSpace(copLocal,NULL);
             _SFCB_TRACE(1,("--- handler %s %s",(char*)ns->hdl,(char*)str->hdl));
             
    in=CMNewArgs(_broker,NULL);
    CMAddArg(in,"handler",&ciLocal,CMPI_instance);
-   CMAddArg(in,"key",&cop,CMPI_ref);
+   CMAddArg(in,"key",&copLocal,CMPI_ref);
    op=CMNewObjectPath(_broker,"root/interop","cim_indicationsubscription",&st);
    rv=CBInvokeMethod(_broker,ctx,op,"_addHandler",in,out,&st);
 
-   if (st.rc==CMPI_RC_OK) 
-      st=InternalProviderCreateInstance(NULL,ctx,rslt,cop,ciLocal);
+   if (st.rc==CMPI_RC_OK) {
+      st=InternalProviderCreateInstance(NULL,ctx,rslt,copLocal,ciLocal);
+   }
+   else {
+     rv=CBInvokeMethod(_broker,ctx,op,"_removeHandler",in,out,NULL);
+   }
 
-   CMRelease(ciLocal);
    _SFCB_RETURN(st);
 }
 

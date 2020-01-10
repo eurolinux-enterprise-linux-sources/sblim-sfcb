@@ -323,12 +323,10 @@ updateSLPReg(const CMPIContext *ctx, int slpLifeTime)
   long            i;
   int             errC = 0;
 
-  extern char    *configfile;
-
   _SFCB_ENTER(TRACE_SLP, "updateSLPReg");
 
   pthread_mutex_lock(&slpUpdateMtx);
-  setupControl(configfile);
+  void* hc = markHeap();
 
   getControlBool("enableSlp", &enableSlp);
   if(!enableSlp) {
@@ -363,7 +361,7 @@ updateSLPReg(const CMPIContext *ctx, int slpLifeTime)
                                                 // digits 
     sprintf(cfgHttps.port, "%d", (int) i);
     getControlChars("sslClientTrustStore", &cfgHttps.trustStore);
-    getControlChars("sslCertificateFilePath:", &cfgHttps.certFile);
+    getControlChars("sslCertificateFilePath", &cfgHttps.certFile);
     getControlChars("sslKeyFilePath", &cfgHttps.keyFile);
 
     service = getSLPData(cfgHttps, _broker, ctx, https_url);
@@ -375,6 +373,7 @@ updateSLPReg(const CMPIContext *ctx, int slpLifeTime)
   
   freeCFG(&cfgHttp);
   freeCFG(&cfgHttps);
+  releaseHeap(hc);
   pthread_mutex_unlock(&slpUpdateMtx);
   return;
 }
@@ -440,6 +439,7 @@ slpUpdate(void *args)
             timeLeft, slp_shutting_down ? "true" : "false"));
   }
   //End loop
+  CMRelease(ctx);
   if(http_url) {
     _SFCB_TRACE(2, ("--- Deregistering http advertisement"));
     deregisterCIMService(http_url);

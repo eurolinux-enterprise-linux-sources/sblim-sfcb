@@ -7,8 +7,8 @@
 Name: sblim-sfcb
 Summary: Small Footprint CIM Broker
 URL: http://www.sblim.org
-Version: 1.3.8
-Release: 1%{?dist}
+Version: 1.3.11
+Release: 2%{?dist}
 Group: Applications/System
 License: EPL
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
@@ -17,6 +17,10 @@ Patch0:	sblim-sfcb-disable_auto_service_start.patch
 Patch1: sblim-sfcb-1.3.7-initscript.patch
 #Patch2: accepted by upstream
 Patch2: sblim-sfcb-1.3.7-close_logging.patch
+#Patch3: Red Hat specific
+Patch3: sblim-sfcb-1.3.9-sfcbrepos-schema-location.patch
+#Patch4: backported from upstream
+Patch4: sblim-sfcb-1.3.11-check-before-free.patch
 Provides: cim-server
 Requires: cim-schema
 Requires: util-linux-ng
@@ -49,9 +53,11 @@ Programming Interface (CMPI).
 %patch0 -p1 -b .disable_auto_service_start
 %patch1 -p1 -b .initscript
 %patch2 -p1 -b .close_logging
+%patch3 -p1 -b .sfcbrepos-schema-location
+%patch4 -p1 -b .check-before-free
 
 %build
-%configure --enable-debug --enable-ssl --enable-pam --enable-ipv6 CFLAGS="$CFLAGS -D_GNU_SOURCE"
+%configure --enable-debug --enable-uds --enable-ssl --enable-pam --enable-ipv6 CFLAGS="$CFLAGS -D_GNU_SOURCE"
  
 make 
 
@@ -86,12 +92,16 @@ echo "%{_libdir}/sfcb/*.so" >> _pkg_list
 cat _pkg_list
 
 %clean
-rm -rf $RPM_BUILD_ROOT 
+rm -rf $RPM_BUILD_ROOT
+
+%pre
+/usr/bin/getent group sfcb >/dev/null || /usr/sbin/groupadd -r sfcb
+/usr/sbin/usermod -a -G sfcb root > /dev/null 2>&1 || :
 
 %post 
 %{_datadir}/sfcb/genSslCert.sh %{_sysconfdir}/sfcb &>/dev/null || :
 /sbin/ldconfig
-%{_bindir}/sfcbrepos -f -c /usr/share/mof/cim-current
+%{_bindir}/sfcbrepos -f
 /sbin/chkconfig --add sblim-sfcb
 
 %preun
@@ -105,6 +115,9 @@ fi
 if [ $1 -gt 1 ]; then
 	/sbin/service sblim-sfcb condrestart|try-restart &> /dev/null
 fi
+if [ $1 -eq 0 ]; then
+	/usr/sbin/groupdel sfcb > /dev/null 2>&1 || :;
+fi;
 
 %files -f _pkg_list
 
@@ -116,6 +129,22 @@ fi
 #%doc COPYING README
 
 %changelog
+* Wed Oct 12 2011 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.11-2
+- Checks for valid pointer before calling free() in providerDrv.c,
+  result.c and support.c (backported from upstream)
+
+* Wed Jun 15 2011 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.11-1
+- Update to sblim-sfcb-1.3.11
+  Resolves: #633580
+- Compile with --enable-uds, i. e. enable unix domain socket local connect functionality
+  Resolves: #620303
+- Create sfcb system group (used by basic authentication with PAM) in pre install scriptlet,
+  remove it in post uninstall scriptlet
+  Resolves: #618081
+- Fix default location where sfcbrepos is looking for schema files
+  and simplify sfcbrepos command in post install sciptlet
+  Resolves: #618080
+
 * Mon Jun 21 2010 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.8-1
 - Update to sblim-1.3.8
 
