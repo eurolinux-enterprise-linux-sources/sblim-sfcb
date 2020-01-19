@@ -8,7 +8,7 @@ Name: sblim-sfcb
 Summary: Small Footprint CIM Broker
 URL: http://sblim.wiki.sourceforge.net/
 Version: 1.3.16
-Release: 11%{?dist}
+Release: 7%{?dist}
 Group: Applications/System
 License: EPL
 Source0: http://downloads.sourceforge.net/sblim/%{name}-%{version}.tar.bz2
@@ -38,13 +38,6 @@ Patch8: sblim-sfcb-1.3.16-escape.patch
 Patch9: sblim-sfcb-1.3.16-embedded-instance.patch
 # Patch10: increase default value of maxMsgLen in sfcb.cfg
 Patch10: sblim-sfcb-1.3.16-maxMsgLen.patch
-# Patch11: fixes sfcbmofpp segfaults if mof contains line with end of
-#   block comment without line ending after it, accepted by upstream
-Patch11: sblim-sfcb-1.3.16-mofpp-segfault.patch
-# Patch12: fixes rhbz#1047781, backported from upstream
-Patch12: sblim-sfcb-1.3.16-fix-logger-for-long-lived-clients.patch
-# Patch13: fixes rhbz#1067842, multilib issue with man page and config file
-Patch13: sblim-sfcb-1.3.16-multilib-man-cfg.patch
 Provides: cim-server = 0
 Requires: cim-schema
 BuildRequires: libcurl-devel
@@ -80,9 +73,6 @@ Programming Interface (CMPI).
 %patch8 -p1 -b .escape
 %patch9 -p1 -b .embedded-instance
 %patch10 -p1 -b .maxMsgLen
-%patch11 -p1 -b .mofpp-segfault
-%patch12 -p1 -b .fix-logger-for-long-lived-clients
-%patch13 -p1 -b .multilib-man-cfg
 
 %build
 %configure --enable-debug --enable-uds --enable-ssl --enable-pam --enable-ipv6 CFLAGS="$CFLAGS -D_GNU_SOURCE -fPIE -DPIE" LDFLAGS="$LDFLAGS -Wl,-z,now -pie"
@@ -140,22 +130,6 @@ fi;
 %files -f _pkg_list
 
 %changelog
-* Tue Mar 04 2014 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.16-11
-- Fix connection fails to openwsman with sfcbLocal frontend
-  Resolves: #1047781
-- Fix multilib issue with man page and config file
-  Resolves: #1067842
-
-* Mon Feb 10 2014 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.16-10
-- Fix sfcbmofpp segfault
-  Resolves: #1061749
-
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.3.16-9
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.3.16-8
-- Mass rebuild 2013-12-27
-
 * Tue Oct 15 2013 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.16-7
 - Add version to cim-server virtual provides
   Resolves: #1018739
