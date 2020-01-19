@@ -8,7 +8,7 @@ Name: sblim-sfcb
 Summary: Small Footprint CIM Broker
 URL: http://sblim.wiki.sourceforge.net/
 Version: 1.3.16
-Release: 11%{?dist}
+Release: 12%{?dist}
 Group: Applications/System
 License: EPL
 Source0: http://downloads.sourceforge.net/sblim/%{name}-%{version}.tar.bz2
@@ -45,6 +45,8 @@ Patch11: sblim-sfcb-1.3.16-mofpp-segfault.patch
 Patch12: sblim-sfcb-1.3.16-fix-logger-for-long-lived-clients.patch
 # Patch13: fixes rhbz#1067842, multilib issue with man page and config file
 Patch13: sblim-sfcb-1.3.16-multilib-man-cfg.patch
+# Patch14: fix CIM clients are sometimes getting HTTP/1.1 501 Not Implemented
+Patch14: sblim-sfcb-1.3.16-http-header-cmd-check.patch
 Provides: cim-server = 0
 Requires: cim-schema
 BuildRequires: libcurl-devel
@@ -83,6 +85,7 @@ Programming Interface (CMPI).
 %patch11 -p1 -b .mofpp-segfault
 %patch12 -p1 -b .fix-logger-for-long-lived-clients
 %patch13 -p1 -b .multilib-man-cfg
+%patch14 -p1 -b .http-header-cmd-check
 
 %build
 %configure --enable-debug --enable-uds --enable-ssl --enable-pam --enable-ipv6 CFLAGS="$CFLAGS -D_GNU_SOURCE -fPIE -DPIE" LDFLAGS="$LDFLAGS -Wl,-z,now -pie"
@@ -140,6 +143,10 @@ fi;
 %files -f _pkg_list
 
 %changelog
+* Thu Nov 20 2014 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.16-12
+- Fix CIM clients are sometimes getting HTTP/1.1 501 Not Implemented
+  Resolves: #1156093
+
 * Tue Mar 04 2014 Vitezslav Crhonek <vcrhonek@redhat.com> - 1.3.16-11
 - Fix connection fails to openwsman with sfcbLocal frontend
   Resolves: #1047781
