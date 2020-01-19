@@ -1,0 +1,208 @@
+#!/bin/bash
+
+# Status files
+
+CVS_CO_OUT=cvsco.out
+AUTO_CONFISCATE=autoconfiscate.out
+CONFIGURE_OUT=configure.out
+MAKE_OUT=make.out
+TEST_OUT=test.out
+MAIL_FILE=mailFile
+REPORT_SUMMARY=report.summary
+RC=0
+REPORT_DIR="report`date -u +%y%m%d`"
+BASE_DIR=$1
+TESTNAME=$2
+CONFIGOPTIONS=$3
+COVERAGE_DIR="$BASE_DIR/sfcb/coverage"
+REPORTDIR=$BASE_DIR/$REPORT_DIR/"$TESTNAME"
+RESULTDIR=$REPORTDIR/xmlFailure_reportFiles
+HTMLFILE="$REPORTDIR/index.html"
+
+if [ ! -d $BASE_DIR ]; then
+    mkdir -p $BASE_DIR
+fi
+if [ ! -d "$REPORTDIR" ]; then
+    mkdir -p "$REPORTDIR"
+fi
+
+#Output to the email and index.html files
+# 1st arg is the text, 2nd is the link target
+DUALOUT()
+{
+    echo $1 >> $BASE_DIR/$REPORT_SUMMARY
+    if [[ $2 ]] 
+    then
+        #If a link was given, make the text hot
+        echo "<a href=$2>$1</a><br>" >> $HTMLFILE
+    else
+        #If not, just plain text.
+        echo "$1<br>" >> $HTMLFILE
+    fi
+}
+
+
+# Clean SFCB
+SFCB_CLEAN()
+{
+    if [ -d $BASE_DIR/sfcb ] ; then
+        cd ${BASE_DIR}/sfcb
+        make clean uninstall
+    fi
+}
+
+# check-out the code from CVS
+
+CVS_CHECK_OUT()
+{
+    cvs login
+    cd ${BASE_DIR}
+    if cvs co sfcb 1>"$REPORTDIR"/$CVS_CO_OUT 2>&1
+    then
+        RC=0
+        DUALOUT "SFCB check-out : SUCCESS" "./$CVS_CO_OUT"
+        cd sfcb
+        if cvs co mofc 1>"$REPORTDIR"/$CVS_CO_OUT 2>&1
+        then
+            RC=0
+            DUALOUT "MOFC check-out : SUCCESS" "./$CVS_CO_OUT"
+        else
+            RC=1
+            DUALOUT "MOFC check-out : FAILURE" "./$CVS_CO_OUT"
+            exit $RC
+        fi
+    else
+        RC=1
+        DUALOUT "SFCB check-out : FAILURE" "./$CVS_CO_OUT"
+        exit $RC
+    fi
+}
+
+SFCB_START()
+{
+    /usr/local/etc/init.d/sfcb  start
+    if [ $? -eq 0 ] ; then
+        DUALOUT "SFCB start : SUCCESS" 
+    else
+        DUALOUT "SFCB start : FAILURE" 
+    fi
+}
+
+SFCB_STOP()
+{
+    /usr/local/etc/init.d/sfcb  stop
+    if [ $? -eq 0 ] ; then
+        DUALOUT "SFCB stop : SUCCESS"
+    else
+        DUALOUT "SFCB stop : FAILURE"
+    fi
+}
+
+SFCB_RESULTFILES()
+{
+    find . -name "*.result" > $BASE_DIR/temp
+    size_temp=`ls -ltr $BASE_DIR/temp | awk '{print $5}'`
+    rm -f $BASE_DIR/temp
+    if [ $size_temp -ne 0 ] ; then
+        mkdir -p $RESULTDIR
+        find . -name "*.result" -print0 | xargs  -0 -r -I file cp  file --target-directory=$RESULTDIR --parents
+    fi
+}
+
+SFCB_TESTS()
+{
+    echo "Starting Unit tests ........." >> $BASE_DIR/$TEST_OUT
+
+    SFCB_START
+    if make test 1>>"$REPORTDIR"/$TEST_OUT 2>&1
+    then
+        RC=0
+        cp -r  $COVERAGE_DIR    "$REPORTDIR"
+        DUALOUT "SFCB Tests : SUCCESS" "./$TEST_OUT"
+    else
+        RC=1
+        DUALOUT "SFCB Tests : FAILURE" "./$TEST_OUT"
+    fi
+    SFCB_STOP
+    SFCB_RESULTFILES
+}
+
+AUTO_CONF()
+{
+    if sh ./autoconfiscate.sh 1> "$REPORTDIR"/$AUTO_CONFISCATE 2>&1
+    then
+        RC=0
+        DUALOUT "Autoconfiscate : SUCCESS" "./$AUTO_CONFISCATE"
+    else
+        RC=1
+        DUALOUT "Autoconfiscate : FAILURE" "./$AUTO_CONFISCATE"
+        exit $RC
+    fi
+}
+
+CONFIGURE_SFCB()
+{
+    if  sh ./configure  $CONFIGOPTIONS 1>> "$REPORTDIR"/$CONFIGURE_OUT 2>&1
+    then
+        RC=0
+        DUALOUT "CONFIGURE : SUCCESS" "./$CONFIGURE_OUT"
+        BUILD_SFCB
+    else
+        RC=1
+        DUALOUT "CONFIGURE : FAILURE" "./$CONFIGURE_OUT"
+    fi
+}
+
+# Starts SFCB Build
+
+BUILD_SFCB()
+{
+    echo " " >>  ${REPORTDIR}/${MAKE_OUT}
+    echo "Starting Build " >> ${REPORTDIR}/${MAKE_OUT}
+    echo " " >> ${REPORTDIR}/${MAKE_OUT}
+
+    if  make  1>>${REPORTDIR}/${MAKE_OUT} 2>&1
+    then
+        DUALOUT "MAKE  : SUCCESS" "./$MAKE_OUT"
+        if make install 1>>${REPORTDIR}/${MAKE_OUT} 2>&1
+        then
+            DUALOUT "MAKE INSTALL : SUCCESS" "./$MAKE_OUT"
+            if make postinstall 1>>${REPORTDIR}/${MAKE_OUT} 2>&1
+            then
+                RC=0
+                DUALOUT "MAKE POSTINSTALL : SUCCESS" "./$MAKE_OUT"
+                SFCB_TESTS
+            else
+                RC=1
+                DUALOUT "MAKE POSTINSTALL : FAILURE" "./$MAKE_OUT"
+            fi
+        else
+            RC=1
+            DUALOUT "MAKE INSTALL : FAILURE" "./$MAKE_OUT"
+        fi
+    else
+        RC=1
+        DUALOUT "MAKE  : FAILURE" "./$MAKE_OUT"
+    fi
+}
+
+# init the output files
+echo "<HTML><BODY>" >$HTMLFILE
+
+DUALOUT "TEST NAME :  $TESTNAME"
+DUALOUT "CONFIG OPTIONS: $CONFIGOPTIONS"
+
+SFCB_CLEAN
+if [ ! -d $BASE_DIR/sfcb ]; then
+    CVS_CHECK_OUT
+    AUTO_CONF
+fi
+CONFIGURE_SFCB
+
+echo "<a href=./coverage/index.html>Code Coverage Report</a><br>" >> $HTMLFILE
+
+DUALOUT " " 
+DUALOUT "============================================================== " 
+echo "</BODY></HTML>" >>$HTMLFILE
+
+exit  $RC

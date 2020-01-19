@@ -1,0 +1,156 @@
+#!/bin/bash
+
+USAGE()
+{
+    echo " MonitorABT  -sd [-mid] [-cf]"
+    echo " sd  ----   Directory where sfcb will be downloaded and built"
+    echo " mid ----   Machine ID"
+    echo " cf  ----   Configuration file"
+    echo " Example :"
+    echo " MonitorABT  -sd /opt/ABT [-mid xnl3107] [-cf /tmp/SFCB/sfcbABT.conf]"
+    exit 1
+}
+
+scriptDir=""
+confFile=""
+machineID=""
+zipFile="report.zip"
+reportSummary="report.summary"
+testCount=0
+DATE=`date -u +%y%m%d`
+STATUS="SUCCESS"
+
+selfUpdateDone="no"
+params=$*
+if [ $# -eq 0 ] ; then
+   USAGE
+else
+   confFileStatus=0
+   sdStatus=0
+   
+   for conf in  $*
+   do
+      case $conf in
+          "-mid"|"-MID")
+                machineID=$2
+                shift 2
+                ;;
+          "-cf"|"-CF")
+                confFile=$2
+                shift 2
+                confFileStatus=1
+                if [ ! -f $confFile ] ; then
+                    echo "No configuration file present in the location $confFile"
+                    exit 1;
+                else
+                    chmod 755 $confFile
+                fi
+                ;;
+           "-sd"|"-SD")
+                sdStatus=1          
+                scriptDir=$2
+                shift 2
+                if [ ! -d $scriptDir ]; then
+                    echo " $scriptDir is not a directory"
+                    USAGE
+                fi  
+                ;;
+           #For internal use.
+           "-ud")
+                selfUpdateDone="yes"
+                shift 1
+                ;;
+      esac
+   done
+fi
+
+if [ $sdStatus -eq 0 ]; then
+    echo "Provide ABT scripts Location"
+    USAGE
+fi
+
+if [ $selfUpdateDone == "no" ]; then
+    cd $scriptDir
+    cvs -d :pserver:anonymous:@sblim.cvs.sourceforge.net:/cvsroot/sblim co sfcb/test/ABT/
+    cd -
+    cp $scriptDir/sfcb/test/ABT/* $scriptDir
+    cp $scriptDir/MonitorABT $0
+    exec $0 -ud $params
+fi
+
+if [ $confFileStatus -eq 0 ] ; then
+    echo "No configuration file: It will take default conf file"
+    confFile=$scriptDir/sfcb.config
+fi
+
+if [ "$machineID" == "" ] ; then
+    machineID=`hostname`
+fi
+RELEASE=`lsb_release -r -s`
+IDISTRO=`lsb_release -i -s`
+
+source $confFile
+
+export DISTRO="$IDISTRO $RELEASE"
+export MID=$machineID
+
+#Check the config options
+if [ ! $CVSROOT ] ; then
+    export CVSROOT=":pserver:anonymous:@sblim.cvs.sourceforge.net/cvsroot/sblim"
+fi
+
+export SFCB_ROOT=$scriptDir/sfcbBuild
+
+index=${#TESTCONFIG[@]}
+
+i=0
+
+if [ -d $SFCB_ROOT ]; then
+    rm -rf $SFCB_ROOT
+fi
+
+while [ $i -lt $index ]
+do
+     sh $scriptDir/ABTScript $SFCB_ROOT "${TESTNAME[$i]}"  "${TESTCONFIG[$i]}"
+     if [ $? -eq 0 ] ; then
+         let testCount="$testCount + 1"
+     fi
+     let i="$i + 1"
+done
+
+if [ $testCount -eq $index ] ; then
+    STATUS="SUCCESS"
+else
+    STATUS="FAILURE"
+fi
+let  failureNo="$index - $testCount"
+
+# Posting reports to sourceforge.net
+
+if [  $REMOTE_USER_ID ]; then
+   if [ $REMOTE_HOST ]; then
+      if [ $SFCB_REMOTE_DESTINATION ]; then
+         if [ $SFCB_LOCAL_SOURCE ]; then
+            scp -r $SFCB_LOCAL_SOURCE  $REMOTE_USER_ID@$REMOTE_HOST:$SFCB_REMOTE_DESTINATION
+            if [ $? -eq 0 ] ; then
+              echo "SCP Success"  >> $SFCB_ROOT/$reportSummary
+            else 
+              echo "SCP Failure"  >> $SFCB_ROOT/$reportSummary
+            fi
+         else
+            echo "Provide Source location" >> $SFCB_ROOT/$reportSummary
+         fi
+      else
+         echo "Provide Remote Destination"  >> $SFCB_ROOT/$reportSummary
+      fi
+   else
+      echo "Provide Remote Machine IP/Host Name"  >> $SFCB_ROOT/$reportSummary
+   fi
+else
+   echo "Provide Remote Machine User ID"  >> $SFCB_ROOT/$reportSummary
+fi
+
+# Mail the report
+
+zip -r $SFCB_ROOT/$zipFile $SFCB_ROOT/"report$DATE"
+mutt -a $SFCB_ROOT/$zipFile -s "SFCB NBT: $STATUS: $TESTSUITE: $MID: $DISTRO: $DATE: ($testCount OK,$failureNo FAIL)" $MAIL_IDS < $SFCB_ROOT/$reportSummary

@@ -1,0 +1,394 @@
+diff -up sblim-sfcb-1.3.16/cimXmlGen.c.orig sblim-sfcb-1.3.16/cimXmlGen.c
+--- sblim-sfcb-1.3.16/cimXmlGen.c.orig	2013-06-13 16:13:19.001289413 +0200
++++ sblim-sfcb-1.3.16/cimXmlGen.c	2013-06-13 16:13:19.005289432 +0200
+@@ -54,16 +54,24 @@ extern CMPIData opGetKeyCharsAt(CMPIObje
+                                 const char **name, CMPIStatus * rc);
+ extern CMPIData __ift_internal_getPropertyAt(const CMPIInstance * ci, 
+ 					     CMPICount i, char ** name,
+-					     CMPIStatus * rc, int readonly);
++					     CMPIStatus * rc, int readonly,
++					     unsigned long* quals);
+ extern int invalid_uint(const char *v, const CMPIType type);
+ extern int getCustomHostname(char *httpHost, char **hn, unsigned int len);
+ 
+ 
+ const char *opGetClassNameChars(CMPIObjectPath * cop);
+ 
++/* We introduce additional parameter in data2xml, use this macro when you want
++ * pass it, use the original when you want data2xml behave as usual */
++#define EMBDATA2XML(data,obj,name,refname,btag,etag,sb,qsb,inst,param,embInst)  \
++  data2xml((data),(obj),(name),(refname),(btag),sizeof(btag)-1,(etag),          \
++	   sizeof(etag)-1,(sb),(qsb),(inst),(param),(embInst))
++
++
+ #define DATA2XML(data,obj,name,refname,btag,etag,sb,qsb,inst,param)    \
+   data2xml((data),(obj),(name),(refname),(btag),sizeof(btag)-1,(etag), \
+-	   sizeof(etag)-1,(sb),(qsb),(inst),(param))
++	   sizeof(etag)-1,(sb),(qsb),(inst),(param),0)
+ 
+ static int add_escaped_instance(UtilStringBuffer *sb, CMPIInstance *inst)
+ {
+@@ -679,7 +687,7 @@ static void method2xml(CMPIType type, CM
+ 
+ void data2xml(CMPIData * data, void *obj, CMPIString * name, CMPIString * refName, 
+ 		     char *bTag, int bTagLen, char *eTag, int eTagLen,
+-                     UtilStringBuffer * sb, UtilStringBuffer * qsb, int inst, int param)
++                     UtilStringBuffer * sb, UtilStringBuffer * qsb, int inst, int param, int embInst)
+ {
+    _SFCB_ENTER(TRACE_CIMXMLPROC, "data2xml");
+ 
+@@ -699,7 +707,11 @@ void data2xml(CMPIData * data, void *obj
+       }
+       else if(((data->type & ~CMPI_ARRAY) == CMPI_instance) 
+                || ((data->type & ~CMPI_ARRAY) == CMPI_class)) {
+-         SFCB_APPENDCHARS_BLOCK(sb, "string\" EmbeddedObject=\"object");
++         if (embInst == 1) {
++                 SFCB_APPENDCHARS_BLOCK(sb, "\" EmbeddedObject=\"instance");
++         } else {
++                 SFCB_APPENDCHARS_BLOCK(sb, "\" EmbeddedObject=\"object");
++         }
+       } else {
+           sb->ft->appendChars(sb, dataType(data->type));
+       }
+@@ -751,7 +763,11 @@ void data2xml(CMPIData * data, void *obj
+       else if (*type == '%') {                  
+ 	     sb->ft->appendBlock(sb, bTag, bTagLen);
+          sb->ft->appendChars(sb, (char *) name->hdl);
+-         SFCB_APPENDCHARS_BLOCK(sb, "\" EmbeddedObject=\"object");
++         if (embInst == 1) {
++                 SFCB_APPENDCHARS_BLOCK(sb, "\" EmbeddedObject=\"instance");
++         } else {
++                 SFCB_APPENDCHARS_BLOCK(sb, "\" EmbeddedObject=\"object");
++         }
+          if (param) SFCB_APPENDCHARS_BLOCK(sb, "\" PARAMTYPE=\"string\">\n");
+          else SFCB_APPENDCHARS_BLOCK(sb, "\" TYPE=\"string\">\n");
+          if(data->value.inst) {
+@@ -791,10 +807,14 @@ static void quals2xml(unsigned long qual
+    if (quals & (ClProperty_Q_Key << 8))
+       SFCB_APPENDCHARS_BLOCK(sb, "<QUALIFIER NAME=\"Key\" TYPE=\"boolean\">\n"
+                           "<VALUE>TRUE</VALUE>\n</QUALIFIER>\n");
+-   if (quals & (ClProperty_Q_EmbeddedObject << 8))
++   if ((quals & (ClProperty_Q_EmbeddedObject << 8)) && !(quals & (ClProperty_Q_EmbeddedInstance << 8)))
+       SFCB_APPENDCHARS_BLOCK(sb,
+                           "<QUALIFIER NAME=\"EmbeddedObject\" TYPE=\"boolean\">\n"
+                           "<VALUE>TRUE</VALUE>\n</QUALIFIER>\n");                          
++   if (quals & (ClProperty_Q_EmbeddedInstance << 8))
++      SFCB_APPENDCHARS_BLOCK(sb,
++                          "<QUALIFIER NAME=\"EmbeddedInstance\" TYPE=\"boolean\">\n"
++                          "<VALUE>TRUE</VALUE>\n</QUALIFIER>\n");                          
+ }
+ 
+ static void param2xml(CMPIParameter *pdata, CMPIConstClass * cls, ClParameter *parm, CMPIString *pname, 
+@@ -866,7 +886,7 @@ static void param2xml(CMPIParameter *pda
+ int cls2xml(CMPIConstClass * cls, UtilStringBuffer * sb, unsigned int flags)
+ {
+    ClClass *cl = (ClClass *) cls->hdl;
+-   int i, m, q, qm, p, pm;
++   int i, m, q, qm, p, pm, embInst = 0;
+    char *type, *superCls;
+    CMPIString *name, *qname, *refName;
+    CMPIData data, qdata;
+@@ -903,18 +923,21 @@ int cls2xml(CMPIConstClass * cls, UtilSt
+             CMRelease(qname);
+ 	    sfcb_native_release_CMPIValue(qdata.type,&qdata.value);
+          }
+-      if (data.type & CMPI_ARRAY) DATA2XML(&data,cls,name,NULL,"<PROPERTY.ARRAY NAME=\"",
+-          "</PROPERTY.ARRAY>\n", sb, qsb, 0,0);
++      if (quals & ClProperty_Q_EmbeddedInstance) embInst = 1;
++
++      if (data.type & CMPI_ARRAY) EMBDATA2XML(&data,cls,name,NULL,"<PROPERTY.ARRAY NAME=\"",
++          "</PROPERTY.ARRAY>\n", sb, qsb, 0,0, embInst);
+       else {
+          type = dataType(data.type);
+          if (*type == '*') {
+-            DATA2XML(&data,cls,name,refName,"<PROPERTY.REFERENCE NAME=\"",
+-                   "</PROPERTY.REFERENCE>\n", sb, qsb, 0,0);
++            EMBDATA2XML(&data,cls,name,refName,"<PROPERTY.REFERENCE NAME=\"",
++                   "</PROPERTY.REFERENCE>\n", sb, qsb, 0,0, embInst);
+          }   
+-         else  DATA2XML(&data,cls,name,NULL,"<PROPERTY NAME=\"", "</PROPERTY>\n",
+-            sb, qsb, 0,0);
++         else  EMBDATA2XML(&data,cls,name,NULL,"<PROPERTY NAME=\"", "</PROPERTY>\n",
++            sb, qsb, 0,0, embInst);
+       }
+       CMRelease(name);
++      embInst = 0;
+    }
+    
+    for (i = 0, m = ClClassGetMethodCount(cl); i < m; i++) {
+@@ -957,9 +980,10 @@ int cls2xml(CMPIConstClass * cls, UtilSt
+ int instance2xml(CMPIInstance * ci, UtilStringBuffer * sb, unsigned int flags)
+ {
+    ClInstance *inst = (ClInstance *) ci->hdl;
+-   int i, m = ClInstanceGetPropertyCount(inst);
++   int i, m = ClInstanceGetPropertyCount(inst), embInst = 0;
+    char *type;
+    UtilStringBuffer *qsb = UtilFactory->newStrinBuffer(1024);
++   unsigned long quals;
+ 
+    _SFCB_ENTER(TRACE_CIMXMLPROC, "instance2xml");
+    
+@@ -976,23 +1000,28 @@ int instance2xml(CMPIInstance * ci, Util
+       if(ClInstanceIsPropertyAtFiltered(inst, i)) {
+           continue;
+       }
+-      data = __ift_internal_getPropertyAt(ci, i, (char**)&name.hdl, NULL, 1);
++      data = __ift_internal_getPropertyAt(ci, i, (char **) &name.hdl, NULL, 1, &quals);
+       
++      if (quals & ClProperty_Q_EmbeddedInstance) {
++        embInst = 1;
++      }
++
+       if (data.type & CMPI_ARRAY) {
+-         DATA2XML(&data,ci,&name,NULL,"<PROPERTY.ARRAY NAME=\"", "</PROPERTY.ARRAY>\n",
+-                  sb, qsb, 1,0);
++         EMBDATA2XML(&data,ci,&name,NULL,"<PROPERTY.ARRAY NAME=\"", "</PROPERTY.ARRAY>\n",
++                  sb, qsb, 1,0, embInst);
+       }   
+       else {
+          type = dataType(data.type);
+-         if (*type == '*')   DATA2XML(&data,ci,&name,NULL,"<PROPERTY.REFERENCE NAME=\"",
+-                     "</PROPERTY.REFERENCE>\n", sb, qsb, 1,0);
+-         else DATA2XML(&data,ci,&name,NULL,"<PROPERTY NAME=\"", "</PROPERTY>\n", sb, qsb, 1,0);
++         if (*type == '*')  EMBDATA2XML(&data,ci,&name,NULL,"<PROPERTY.REFERENCE NAME=\"",
++                     "</PROPERTY.REFERENCE>\n", sb, qsb, 1,0, embInst);
++         else EMBDATA2XML(&data,ci,&name,NULL,"<PROPERTY NAME=\"", "</PROPERTY>\n", sb, qsb, 1,0, embInst);
+       }
+       
+       if (data.type & (CMPI_ENC|CMPI_ARRAY)) {// don't get confused using generic release 
+          if ((data.state&~CMPI_keyValue)==0 && data.type != CMPI_instance) 
+             data.value.inst->ft->release(data.value.inst);
+       }   
++      embInst = 0;
+    }
+    SFCB_APPENDCHARS_BLOCK(sb, "</INSTANCE>\n");
+ 
+diff -up sblim-sfcb-1.3.16/cimXmlGen.h.orig sblim-sfcb-1.3.16/cimXmlGen.h
+--- sblim-sfcb-1.3.16/cimXmlGen.h.orig	2012-06-13 23:21:09.000000000 +0200
++++ sblim-sfcb-1.3.16/cimXmlGen.h	2013-06-13 16:13:19.006289437 +0200
+@@ -52,7 +52,7 @@ extern int qualifierDeclaration2xml(CMPI
+ extern char *XMLEscape(char *in, int *outlen);
+ extern void data2xml(CMPIData * data, void *obj, CMPIString * name, CMPIString * refName, 
+              char *bTag, int bTagLen, char *eTag, int eTagLen,
+-                     UtilStringBuffer * sb, UtilStringBuffer * qsb, int inst, int param);
++                     UtilStringBuffer * sb, UtilStringBuffer * qsb, int inst, int param, int embInst);
+ CMPIType guessType(char *val);
+ 
+ #endif
+diff -up sblim-sfcb-1.3.16/constClass.c.orig sblim-sfcb-1.3.16/constClass.c
+--- sblim-sfcb-1.3.16/constClass.c.orig	2010-10-14 21:42:06.000000000 +0200
++++ sblim-sfcb-1.3.16/constClass.c	2013-06-13 16:13:19.006289437 +0200
+@@ -315,6 +315,24 @@ static CMPIData getPropQualifier(CMPICon
+        return rv_notFound;
+      }
+    }
++   if (strcasecmp(cpq, "embeddedinstance") == 0) {
++     unsigned long quals;
++     getPropertyQualsAt(cc,p-1,NULL,&quals,NULL,rc);
++     if (quals &  ClProperty_Q_EmbeddedInstance) {
++       rv.type = CMPI_boolean;
++       rv.state = CMPI_goodValue;
++       rv.value.boolean = 1;
++       if (rc) {
++         CMSetStatus(rc, CMPI_RC_OK);
++       }
++       return rv;
++     } else {
++       if (rc) {
++         CMSetStatus(rc, CMPI_RC_ERR_NOT_FOUND);
++       }
++       return rv_notFound;
++     }
++   }
+ 
+ 
+    for (i=0; i<num;i++) {
+diff -up sblim-sfcb-1.3.16/instance.c.orig sblim-sfcb-1.3.16/instance.c
+--- sblim-sfcb-1.3.16/instance.c.orig	2012-10-31 02:40:09.000000000 +0100
++++ sblim-sfcb-1.3.16/instance.c	2013-06-13 16:13:19.007289442 +0200
+@@ -205,11 +205,12 @@ static CMPIInstance *__ift_clone(const C
+ 
+ CMPIData __ift_internal_getPropertyAt(const CMPIInstance * ci, CMPICount i, 
+ 				      char ** name,
+-				      CMPIStatus * rc, int readonly)
++				      CMPIStatus * rc, int readonly,
++				      unsigned long* quals)
+ {
+    ClInstance *inst = (ClInstance *) ci->hdl;
+    CMPIData rv = { 0, CMPI_notFound, {0} };
+-   if (ClInstanceGetPropertyAt(inst, i, &rv, name, NULL)) {
++   if (ClInstanceGetPropertyAt(inst, i, &rv, name, quals)) {
+       if (rc)
+          CMSetStatus(rc, CMPI_RC_ERR_NO_SUCH_PROPERTY);
+       return rv;
+@@ -250,7 +251,7 @@ CMPIData __ift_getPropertyAt(const CMPII
+        return rv;
+    }
+ 
+-   rv = __ift_internal_getPropertyAt(ci, i, &sname, rc, 0);
++   rv = __ift_internal_getPropertyAt(ci, i, &sname, rc, 0, NULL);
+    if (name) {
+       *name = sfcb_native_new_CMPIString(sname, NULL, 0);
+    }
+@@ -301,6 +302,22 @@ static CMPICount __ift_getPropertyCount(
+    return (CMPICount) ClInstanceGetPropertyCount(inst);
+ }
+ 
++static CMPIStatus __ift_addPropertyQualifier(const CMPIInstance * instance,
++                                             const char *name,
++                                             const char *qualifier )
++{
++    ClInstance *inst;
++    int rc;
++
++    if (!instance->hdl) {
++        CMReturn(CMPI_RC_ERR_INVALID_HANDLE);
++    }
++
++    inst = (ClInstance *) instance->hdl;
++    rc = ClInstanceAddPropertyQualifierSpecial(inst, name, qualifier);
++    CMReturn(rc);
++}
++
+ 
+ static CMPIStatus __ift_setProperty(const CMPIInstance * instance,
+                                     const char *name,
+@@ -465,7 +482,7 @@ static CMPIObjectPath *__ift_getObjectPa
+ 
+    while (j--) {
+       char *keyName;
+-      CMPIData d = __ift_internal_getPropertyAt(instance, j, &keyName, &tmp, 1);
++      CMPIData d = __ift_internal_getPropertyAt(instance, j, &keyName, &tmp, 1, NULL);
+       if (d.state & CMPI_keyValue) {
+          CMAddKey(cop, keyName, &d.value, d.type);
+          f++;
+@@ -547,7 +564,7 @@ static CMPIStatus __ift_internal_setProp
+         iNew->property_list = __duplicate_list(propertyList);
+         iNew->key_list = __duplicate_list(keys);
+         for (j = 0, m = __ift_getPropertyCount(instance, &st); j < m; j++) {
+-	    data = __ift_internal_getPropertyAt(instance, j, &name, &st, 1);
++	    data = __ift_internal_getPropertyAt(instance, j, &name, &st, 1, NULL);
+             if(__contained_list((char**)propertyList, name) || __contained_list((char**)keys, name)) {
+                if ( (data.state & ~CMPI_keyValue) != 0) {
+                   newInstance->ft->setProperty(
+@@ -702,7 +719,7 @@ CMPIString *instance2String(CMPIInstance
+    add(&buf, &bp, &bm, "\n");
+ 
+    for (i = 0, m = __ift_getPropertyCount(inst, rc); i < m; i++) {
+-      data = __ift_internal_getPropertyAt(inst, i, &pname, rc, 1);
++      data = __ift_internal_getPropertyAt(inst, i, &pname, rc, 1, NULL);
+       add(&buf, &bp, &bm, " ");
+       add(&buf, &bp, &bm, pname);
+       add(&buf, &bp, &bm, " = ");
+@@ -1064,6 +1081,7 @@ static int instFillDefaultProperties(str
+ 	 pd = cc->ft->getPropertyAt(cc,pc,&pn,&ps);
+ 
+ 	 /* if this prop is an EmbeddedObject, force type to CMPI_instance to allow CMSetProperty with a CMPI_Instance */
++	 /* (also works for EmbeddedInstance, since the EmbeddedObject qual will also be set in that case */
+ 	 CMPIData pqd = cc->ft->getPropQualifier(cc, CMGetCharsPtr(pn, NULL), "EmbeddedObject", NULL);
+ 	 if ((pqd.state == CMPI_goodValue) && (pqd.value.boolean == 1)) {
+ 	    pd.type = CMPI_instance;
+@@ -1082,6 +1100,14 @@ static int instFillDefaultProperties(str
+ 	    }
+ 	    __ift_setProperty(&inst->instance,CMGetCharsPtr(pn,NULL),
+ 			      vp,pd.type);
++
++	    /* Copy EmbeddedInstance qualifier from the class to the instance,
++	       so we know, what to put into CIM-XML */
++	    CMPIData pqd = cc->ft->getPropQualifier(cc, CMGetCharsPtr(pn, NULL), "EmbeddedInstance", NULL);
++	    if ((pqd.state == CMPI_goodValue) && (pqd.value.string != NULL)) {
++	        __ift_addPropertyQualifier(&inst->instance, CMGetCharsPtr(pn,NULL), "EmbeddedInstance");
++	    }
++
+ 	 }
+       }
+    }
+diff -up sblim-sfcb-1.3.16/objectImpl.c.orig sblim-sfcb-1.3.16/objectImpl.c
+--- sblim-sfcb-1.3.16/objectImpl.c.orig	2013-06-13 16:13:18.997289393 +0200
++++ sblim-sfcb-1.3.16/objectImpl.c	2013-06-13 16:13:19.008289447 +0200
+@@ -930,7 +930,11 @@ int ClClassAddPropertyQualifierSpecial(C
+       p->quals |= ClProperty_Q_Key;
+    else if (strcasecmp(id, "embeddedobject") == 0)
+       p->quals |= ClProperty_Q_EmbeddedObject;
+-   else
++    /* Make EmbeddedInstance bahave as EmbeddedObject, but be able to distinguish between them */
++   else if (strcasecmp(id, "embeddedinstance") == 0) {
++      p->quals |= ClProperty_Q_EmbeddedObject;
++      p->quals |= ClProperty_Q_EmbeddedInstance;
++    } else
+        return ClClassAddQualifierSpecial(hdr, &p->qualifiers, id, d, arrHdr);
+    return 0;
+ }
+@@ -2145,6 +2149,31 @@ int ClInstanceGetPropertyAt(ClInstance *
+    _SFCB_RETURN(0);
+ }
+ 
++int ClInstanceAddPropertyQualifierSpecial(ClInstance *inst, const char *id,
++                                          const char *qualifier)
++{
++    int i;
++    ClProperty *p;
++
++    _SFCB_ENTER(TRACE_OBJECTIMPL, "ClInstanceAddPropertyQualifierSpecial");
++
++    i = ClObjectLocateProperty(&inst->hdr, &inst->properties, id);
++    if (i == 0)
++        /* cannot find the property */
++        _SFCB_RETURN(CMPI_RC_ERR_NO_SUCH_PROPERTY)
++
++    p = (ClProperty*) getSectionPtr(&inst->hdr, &inst->properties);
++    p = p + i - 1;
++
++    if (strcasecmp(qualifier, "embeddedinstance") == 0) {
++        p->quals |= ClProperty_Q_EmbeddedObject;
++        p->quals |= ClProperty_Q_EmbeddedInstance;
++    } else if (strcasecmp(qualifier, "embeddedobject") == 0)
++        p->quals |= ClProperty_Q_EmbeddedObject;
++
++    _SFCB_RETURN(0)
++}
++
+ int ClInstanceAddProperty(ClInstance * inst, const char *id, CMPIData d)
+ {
+    ClSection *prps = &inst->properties;
+diff -up sblim-sfcb-1.3.16/objectImpl.h.orig sblim-sfcb-1.3.16/objectImpl.h
+--- sblim-sfcb-1.3.16/objectImpl.h.orig	2009-12-22 01:18:29.000000000 +0100
++++ sblim-sfcb-1.3.16/objectImpl.h	2013-06-13 16:13:19.008289447 +0200
+@@ -274,6 +274,7 @@ typedef struct {
+    #ifndef SETCLPFX
+     #define ClProperty_Q_Key 1
+     #define ClProperty_Q_EmbeddedObject 8
++    #define ClProperty_Q_EmbeddedInstance 16
+    #endif 
+    unsigned char originId;
+    PFX(CLPFX,ClSection) qualifiers;
+@@ -469,6 +470,7 @@ extern void ClInstanceFree(ClInstance *i
+ extern char *ClInstanceToString(ClInstance *inst);
+ extern int ClInstanceGetPropertyCount(ClInstance *inst);
+ extern int ClInstanceGetPropertyAt(ClInstance *inst, int id, CMPIData *data, char **name, unsigned long *quals);
++extern int ClInstanceAddPropertyQualifierSpecial(ClInstance *inst, const char *id, const char *qualifier);
+ extern int ClInstanceAddProperty(ClInstance *inst, const char *id, CMPIData d);
+ extern void ClInstanceFilterFlagProperty(ClInstance * inst, int id);
+ extern int ClInstanceIsPropertyAtFiltered(ClInstance * inst, int id);
+diff -up sblim-sfcb-1.3.16/objectImplSwapI32toP32.c.orig sblim-sfcb-1.3.16/objectImplSwapI32toP32.c
+--- sblim-sfcb-1.3.16/objectImplSwapI32toP32.c.orig	2008-11-07 18:00:44.000000000 +0100
++++ sblim-sfcb-1.3.16/objectImplSwapI32toP32.c	2013-06-13 16:13:19.009289452 +0200
+@@ -81,6 +81,7 @@ typedef struct {
+     #define ClProperty_Q_Key 1
+     #define ClProperty_Q_Propagated 2
+     #define ClProperty_Q_EmbeddedObject 8
++    #define ClProperty_Q_EmbeddedInstance 16
+    #endif 
+    unsigned char originId;
+    CLP32_ClSection qualifiers;
+diff -up sblim-sfcb-1.3.16/sfcbdumpP32onI32.c.orig sblim-sfcb-1.3.16/sfcbdumpP32onI32.c
+--- sblim-sfcb-1.3.16/sfcbdumpP32onI32.c.orig	2008-12-18 22:34:33.000000000 +0100
++++ sblim-sfcb-1.3.16/sfcbdumpP32onI32.c	2013-06-13 16:13:19.009289452 +0200
+@@ -72,6 +72,7 @@ typedef struct {
+     #define ClProperty_Q_Key 1
+     #define ClProperty_Q_Propagated 2
+     #define ClProperty_Q_EmbeddedObject 8
++    #define ClProperty_Q_EmbeddedInstance 16
+    #endif 
+    unsigned char originId;
+    CLP32_ClSection qualifiers;

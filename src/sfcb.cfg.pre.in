@@ -1,0 +1,316 @@
+# $Id: sfcb.cfg.pre.in,v 1.36 2012/06/13 21:21:09 nsharoff Exp $
+##
+## Sample Configuration for Small Footprint CIM Broker
+## 
+## Format is:
+## option: value
+##
+## Value may be boolean, numeric, or a string
+## Some options take multiple values; each value should be delimited by a space
+## Options without explicitly set values will use the default
+## Use '#' at the start of a line to comment
+## 
+
+##------------------------------------- HTTP ----------------------------------
+## Enable HTTP. 
+## Default is true. If HTTPS is configured, default is false.
+enableHttp:     @SFCB_CONF_HTTP@
+
+## The HTTP port that SFCB should listen on. 
+## Default is 5988
+httpPort:       5988
+
+## These settings control what user http is forked under. If
+## httpUserSFCB is "true" (the default), http will run under 
+## the same user as the SFCB main process. If it is "false" the username 
+## specified for httpUser will be used. This setting is used for
+## both http and https servers
+## httpUser MUST be specified if httpUserSFCB is false.
+#httpUserSFCB:true
+#httpUser: 
+
+## Max number of HTTP processes.  
+## Default is 8
+httpProcs:      8
+
+## Do not allow HTTP request from anywhere except localhost.
+## Default is false
+#httpLocalOnly: false
+
+## Enable HTTP chunking. This will reduce memory usage of HTTP process.
+## Possible values are: true, false, always
+## "always" will chunk responses regardless of the client's HTTP headers
+## Default is true
+useChunking:    true
+
+## Size of chunks in bytes. This has an affect even if useChunking is not 
+## enabled. Also, sfcb may internally adjust this value if needed.
+## Default is 50000
+#chunkSize: 50000
+
+## Maximum ContentLength of an HTTP request allowed.
+## Default is 100000000
+#httpMaxContentLength: 100000000
+
+## Customization library - user can modify the logic of one or more routine(s)
+## But, do not remove any functions or change the function signature.
+sfcbCustomLib:   sfcCustomLib
+
+## Enable basic authentication for HTTP and HTTPS connections
+## Default is false
+doBasicAuth:    @SFCB_CONF_DOBASICAUTH@
+
+## Name of of the authenticaion library. Leave off the ".so"
+## Default is: sfcBasicAuthentication
+basicAuthLib:   @SFCB_CONF_BASICAUTHLIB@
+
+## Maximum time in seconds an sfcb HTTP process will wait for select.
+## Default is 5
+#selectTimeout: 5
+
+## Name of the entry point into the authentication library
+## The return code of this function will determine if auth passes or fails
+## Default is: _sfcBasicAuthenticate
+basicAuthEntry: _sfcBasicAuthenticate
+
+## Maximum time in seconds an sfcb HTTP process will wait between two requests
+## on one connection before terminating. 0 will disable HTTP keep-alive.
+## Default is 15
+#keepaliveTimeout: 15
+
+## Maximum number of consecutive request on one connection. 0 will disable HTTP
+## keep-alive. 
+## Default is 10
+#keepaliveMaxRequest: 10
+
+## The location of the HTTP named socket. This should be someplace writable
+## by the user that sfcb runs under.
+## Default is /tmp/sfcbHttpSocket
+#httpSocketPath: /tmp/sfcbHttpSocket
+
+## The location of the named socket used for LocalConnect requests. This 
+## should be someplace writable by the user that sfcbd runs under.
+## Default is /tmp/sfcbLocalSocket
+#localSocketPath: /tmp/sfcbLocalSocket
+
+## The group name to use to set permission for the named socket. This is
+## useful for daemon clients where worker threads are running with permission
+## different than the permission for the named socket. For example, sfcb may
+## be running as root while a web server using sfcb may be running as daemon.
+## Default is NULL which means no change to the default permission.
+#socketPathGroupPerm: daemon
+
+## Trim leading and trailing whitespace from XML property values. 
+## Whitespace is space, tab, crlf. Any ascii value <= 32.
+## Default is true
+#trimWhitespace:      true
+
+##---------------------------- Provider-Related -------------------------------
+
+## Max number of provider processes.  
+## Default is 32.
+provProcs:      32
+
+## Max message length, in bytes. This is a limit on the size of messages
+## written across sockets, for instance, between providers and SFCB.
+## Default is 10000000
+maxMsgLen:      10000000
+
+## Location of the registration directory, where providerRegister can be found
+## Default is @localstatedir@/lib/sfcb/registration
+registrationDir: @localstatedir@/lib/sfcb/registration
+
+## Locations to look for provider libraries. Delimit paths with a space.
+## Default is @libdir@/sfcb @libdir@ @libdir@/cmpi
+providerDirs: @libdir@/sfcb @libdir@ @libdir@/cmpi
+
+## Enable the root/interop namespace (affects indications)
+## Default: true
+enableInterOp:  true
+
+## How often a provider is checked for idleness, in seconds.
+## Default is 30
+#providerSampleInterval: 30
+
+## How long before an idle provider is unloaded. This is the /shortest/ amount
+## of time before unload; there is some dependency on providerSampleInterval
+## Default is 60
+#providerTimeoutInterval: 60
+
+## Group together all providers residing in the same shared library to be in 
+## the same process, unless explicitly grouped differently in providerRegister
+## Default is true
+#providerAutoGroup: true
+
+## For an invokeMethod request, validate method parameter types against what
+## is specified in the mof, and return an error on a mismatch. Many providers 
+## will do this on their own. Note that if one param type is not set, SFCB will
+## do validation and set the correct type, even if this option is disabled.
+## Default is false.
+#validateMethodParamTypes:  false
+
+## These settings control what user providers are forked under. If
+## providerDefaultUserSFCB is "true" (the default), providers will run under 
+## the same user as the SFCB main process. If it is "false" the username 
+## specified for providerDefaultUser will be used. 
+## providerDefaultUser MUST be specified if providerDefaultUserSFCB is false.
+##
+## In either case, a user name specified in the providerRegister will override
+## these settings.
+#providerDefaultUserSFCB:true
+#providerDefaultUser: 
+
+##--------------------------------- HTTPS -------------------------------------
+## These options only apply if configured with --enable-ssl
+
+## Enable HTTPS. 
+## Default is false. If HTTPS is configured, default is true.
+enableHttps:    @SFCB_CONF_HTTPS@
+
+## The HTTP port that SFCB should listen on for secure connections. 
+## Default is 5989
+httpsPort:      5989
+
+## Filename containing the private key for the server's certificate. The file 
+## must be in PEM format and may not be passphrase-protected. 
+## Default is @sysconfdir@/sfcb/file.pem
+sslKeyFilePath: @sysconfdir@/sfcb/file.pem
+
+## Filename containing the server's certificate. Must be in PEM format.
+## Default is @sysconfdir@/sfcb/server.pem
+sslCertificateFilePath: @sysconfdir@/sfcb/server.pem
+
+## How SFCB handles client certificate based authentication. 
+## ignore - do not request a certificate from the client
+## accept - request a certificate from the client; do not fail if not presented
+## require - refuse the client connection if the client doesn't present a 
+##           certificate 
+## Default is ignore
+sslClientCertificate: ignore
+
+## Location of the trust store. If sslClientCertificate is set to "require", 
+## certificate presented must present valid according to the trust store.
+## Default: @sysconfdir@/sfcb/client.pem
+sslClientTrustStore: @sysconfdir@/sfcb/client.pem
+
+## Name of the local library to call for client-certificate based user 
+## authentication. 
+## Applicable only if sslClientCertificate is not set to "accept" or "require".
+## Default is sfcCertificateAuthentication
+certificateAuthLib:   sfcCertificateAuthentication
+
+## List of SSL ciphers to enable.
+## Default is "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH" which disables
+##      weak ciphers.
+sslCiphers: ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH
+
+##---------------------------------- UDS --------------------------------------
+## These options only apply if configured with --enable-uds
+
+## Enable connections via Unix domain sockets. 
+## Default is false
+#enableUds:      false
+
+## Enable authentication for Unix domain sockets connections
+## Default is true
+#doUdsAuth:      true
+
+
+##------------------------------------- JDBC ----------------------------------
+## These options only apply if configured with --enable-jdbc
+
+#dbpPort: 5980
+#enableDbp: true
+#dbpProcs: 8
+#dbpsPort: 5981
+#enableDbps: true
+#dbpsProcs: 8
+
+
+##-------------------------------------- SLP -----------------------------------
+## These options only apply if configured with --enable-slp
+
+## Enable registration of service:wbem with slp
+#enableSlp: true
+
+## Time interval in seconds in which the slp process refreshes information.
+## Default is 600
+#slpRefreshInterval: 600
+
+
+##------------------------------------ Trace ----------------------------------
+
+## Location of the trace file.
+## Can be overriden by setting environment variable SFCB_TRACE_FILE
+## The special value "syslog" will send trace to the syslog
+## Default is stderr
+#traceFile: stderr
+
+## Trace mask as an ORed bitmask. 
+## Can be overriden by the command line option -t.  Use "-t ?" for details.
+## Default is 0
+#traceMask: 0
+
+## Trace level. 
+## Can be overriden by setting environment variable SFCB_TRACE_LEVEL. 
+## Default is 0. If trace mask is set (by any method) the default is 1.
+#traceLevel: 0
+
+##---------------------------- Indications ----------------------------
+
+## Indication provider calls to CBDeliverIndication() cause a thread to spawn
+## which will handle the delivery. This allows CBDeliverIndication() to return
+## without waiting for the delivery to complete. However, spawning an unlimited
+## number of threads will cause increased resource usage. This limit will 
+## prevent unlimited thread creation. If the limit is reached, calls to 
+## CBDeliverIndication will block.
+## Default is 30
+#indicationDeliveryThreadLimit: 30
+
+## When the indicationDeliveryThreadLimit is reached, delivery requests will 
+## block, waiting to create a thread. This timeout allows for the indication
+## to be dropped if a new thread cannot be created within a given time.
+## Note that this dropped indication will not be retried, even if reliable
+## indications support is enabled. 
+## Default is 0 (no timeout)
+#indicationDeliveryThreadTimeout: 0
+
+## Timeout passed to curl for thread delivery. After this time has elapsed
+## the indication delivery is considered a failure.
+## Default is 10 seconds
+#indicationCurlTimeout: 10
+
+##----------------------------Reliable Indications ----------------------------
+## Interval between indication retry attempts
+## Default is 20 seconds
+#DeliveryRetryInterval: 20
+
+## Number of retry attempts before giving up
+## Default is 3 attempts (not including initial attempt)
+## A value of 0 disables reliable indications
+## including indication sequence numbers and subscription 
+## removal.
+#DeliveryRetryAttempts: 3
+
+## The length of time an destination can fail before the subscription
+## removal action below is taken
+## Default is 2592000 seconds (30 days)
+#SubscriptionRemovalTimeInterval: 2592000
+
+## The action taken when the time interval expires
+## Default is 2, remove the subscription
+## Other values: 3, disable the subscription
+##               4, ignore (do nothing)
+#SubscriptionRemovalAction: 2
+
+## The maximum number of listener destinations that are allowable.
+## This threshold will prevent creation of new listener destinations,
+## but will not delete them if more are found.
+## Default is 100.
+#MaxListenerDestinations: 100
+
+## The maximum number of ACTIVE subscriptions allowed.
+## This threshold will prevent new activations,
+## but will not deactivate them if more are found.
+## Default is 100.
+#MaxActiveSubscriptions: 100
